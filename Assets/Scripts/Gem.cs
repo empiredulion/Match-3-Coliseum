@@ -133,6 +133,7 @@ public class Gem : MonoBehaviour
 
     public IEnumerator FallMovement(Vector2 targetPosition)
     {
+        board.gemFallingCounts++;
         Vector3 startPosition = rectTransform.localPosition;
 
         while (Vector3.Distance(transform.localPosition, targetPosition) > 0.01f)
@@ -146,7 +147,7 @@ public class Gem : MonoBehaviour
         }
         
         transform.localPosition = targetPosition;
-
+        board.gemFallingCounts--;
         yield return null;
     }
 }

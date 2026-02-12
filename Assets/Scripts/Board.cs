@@ -33,14 +33,13 @@ public class Board : MonoBehaviour
     [SerializeField] private Vector2 gridOffset; // padding for the whole board
     float gemSize = 100f; // actual size is 90, 10 is for spacing
     public Gem[,] grid;
-    bool[,] visited;
     Gem selectedGem;
-
+    bool isAnimating;
+    public int gemFallingCounts = 0;
     public TestBoard testBoard;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        visited = new bool[xDim, yDim];
         grid = new Gem[xDim, yDim];
         for (int row = 0; row < xDim; row++) {
             for (int column = 0; column < yDim; column++) {
@@ -66,15 +65,16 @@ public class Board : MonoBehaviour
     }
 
     void MakeNewGem(int x, int y) {
-        Vector3 tile_pos = GridToWorldPosition(x, y);
+        Vector3 tile_pos = GridToWorldPosition(x, y + 5);
         GameObject newTile = Instantiate(TilePrefabs[Random.Range(0, TilePrefabs.Count)], tile_pos, Quaternion.identity);
         newTile.transform.SetParent(boardTransform, false);
                     
         grid[x, y] = newTile.GetComponent<Gem>();
-        newTile.GetComponent<Gem>().AssignPosition(x, y);
-        newTile.GetComponent<Gem>().AssignBoard(this);
+        grid[x, y].GetComponent<Gem>().AssignPosition(x, y);
+        grid[x, y].GetComponent<Gem>().AssignBoard(this);
 
         // Gem falls coroutine
+        StartCoroutine(grid[x, y].FallMovement(GridToWorldPosition(x, y)));
     }
 
     public bool IsOneGemAlreadySelected()
@@ -140,7 +140,7 @@ public class Board : MonoBehaviour
                     ClearGem(gem.GetX(), gem.GetY());
                 }
             }
-            FillEmptySpaces();
+            StartCoroutine(FillEmptySpaces());
         }
     }
 
@@ -155,17 +155,6 @@ public class Board : MonoBehaviour
 
     List<ClearableMatch> GetMatches()//Gem inGem, int newX, int newY)
     {
-        // Test, delete after done
-        foreach (Transform t in gameObject.transform)
-        {
-            Gem gem = t.GetComponent<Gem>();
-            if (gem)
-            {
-                //Debug.Log("I am at " + gem.GetXY() + " but Board-chan thinks I'm the bitch at " + GetGem())
-            }
-        }
-        //
-
         List<ClearableMatch> horizontalMatches = new();
         List<ClearableMatch> verticalMatches = new();
         List<Gem> newMatch = new();
@@ -189,35 +178,36 @@ public class Board : MonoBehaviour
 
                     newMatch.Clear();
                     x++;
-                    break;
-                }
-
-                if (newMatch.Count == 0)
-                { // First gem
-                    newMatch.Add(currentGem);
-                    currentType = currentGem.GetGemType();
-                    x++;
                 }
                 else
                 {
-                    if (currentType == currentGem.GetGemType())
-                    { // New gem of same type
-                        newMatch.Add(currentGem);
-                        x++;
-                    }
-                    else
-                    { // New gem of different type
-                        // Long enough
-                        if (newMatch.Count >= 3)
-                        {
-                            horizontalMatches.Add(new ClearableMatch(newMatch));
-                        }
-
-                        // Either way, streak is lost
-                        newMatch.Clear();
+                    if (newMatch.Count == 0)
+                    { // First gem
                         newMatch.Add(currentGem);
                         currentType = currentGem.GetGemType();
                         x++;
+                    }
+                    else
+                    {
+                        if (currentType == currentGem.GetGemType())
+                        { // New gem of same type
+                            newMatch.Add(currentGem);
+                            x++;
+                        }
+                        else
+                        { // New gem of different type
+                            // Long enough
+                            if (newMatch.Count >= 3)
+                            {
+                                horizontalMatches.Add(new ClearableMatch(newMatch));
+                            }
+
+                            // Either way, streak is lost
+                            newMatch.Clear();
+                            newMatch.Add(currentGem);
+                            currentType = currentGem.GetGemType();
+                            x++;
+                        }
                     }
                 }
             }
@@ -241,36 +231,42 @@ public class Board : MonoBehaviour
 
                 if (!currentGem)
                 {
-                    newMatch.Clear();
-                    y++;
-                    break;
-                }
+                    if (newMatch.Count >= 3)
+                    {
+                        horizontalMatches.Add(new ClearableMatch(newMatch));
+                    }
 
-                if (newMatch.Count == 0)
-                { // First gem
-                    newMatch.Add(currentGem);
-                    currentType = currentGem.GetGemType();
+                    newMatch.Clear();
                     y++;
                 }
                 else
                 {
-                    if (currentType == currentGem.GetGemType())
-                    { // New gem of same type
-                        newMatch.Add(currentGem);
-                        y++;
-                    }
-                    else
-                    { // New gem of different type
-                        if (newMatch.Count >= 3)
-                        { // Old streak is long enough
-                            verticalMatches.Add(new ClearableMatch(newMatch));
-                        }
-
-                        // Either way, streak is lost
-                        newMatch.Clear();
+                    if (newMatch.Count == 0)
+                    { // First gem
                         newMatch.Add(currentGem);
                         currentType = currentGem.GetGemType();
                         y++;
+                    }
+                    else
+                    {
+                        if (currentType == currentGem.GetGemType())
+                        { // New gem of same type
+                            newMatch.Add(currentGem);
+                            y++;
+                        }
+                        else
+                        { // New gem of different type
+                            if (newMatch.Count >= 3)
+                            { // Old streak is long enough
+                                verticalMatches.Add(new ClearableMatch(newMatch));
+                            }
+
+                            // Either way, streak is lost
+                            newMatch.Clear();
+                            newMatch.Add(currentGem);
+                            currentType = currentGem.GetGemType();
+                            y++;
+                        }
                     }
                 }
             }
@@ -316,7 +312,7 @@ public class Board : MonoBehaviour
         return finalMatches;
     }
 
-    void FillEmptySpaces()
+    IEnumerator FillEmptySpaces()
     {
         for (int x = 0; x < xDim; x++)
         {
@@ -340,12 +336,28 @@ public class Board : MonoBehaviour
                     }
                 }
             }
+        }
 
-            // Now create new gems
-            // for (int i = 0; i < moveDownSteps; i++)
-            // {
-            //     MakeNewGem(x, yDim - i);
-            // }
+        while (gemFallingCounts > 0)
+        {
+            yield return null;
+        }
+
+        // Now create new gems
+        for (int x = 0; x < xDim; x++)
+        {
+            for (int y = 0; y < yDim; y++)
+            {
+                if (grid[x, y] == null)
+                {
+                    MakeNewGem(x, y);
+                }
+            }
+        }
+
+        while (gemFallingCounts > 0)
+        {
+            yield return null;
         }
 
         ClearAllValidMatches();

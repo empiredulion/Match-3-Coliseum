@@ -38,12 +38,12 @@ public class TestBoard : MonoBehaviour
                 if (oldGem != null)
                 {
                     GameObject newGemObject = Instantiate(oldGem.gameObject);
-                    newGemObject.transform.parent = gameObject.transform;
+                    newGemObject.transform.SetParent(gameObject.transform, false);
                 }
                 else
                 {
                     GameObject newEmptyObject = Instantiate(prefab);
-                    newEmptyObject.transform.parent = gameObject.transform;
+                    newEmptyObject.transform.SetParent(gameObject.transform, false);
                 }
             }
         }
