@@ -17,11 +17,14 @@ public class Gem : MonoBehaviour
     [SerializeField] GemType gemType;
     [SerializeField] RectTransform rectTransform;
 
-    [SerializeField]    int gridX;
-    [SerializeField] int gridY;
+    int gridX;
+    int gridY;
     Board board;
-    readonly float speed = 5f;
+    readonly float speed = 8f;
     bool isSelected;
+
+    readonly float shrinkDuration = 0.3f;
+    [SerializeField] AnimationCurve shrinkCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -133,7 +136,7 @@ public class Gem : MonoBehaviour
 
     public IEnumerator FallMovement(Vector2 targetPosition)
     {
-        board.gemFallingCounts++;
+        board.runningCoroutines++;
         Vector3 startPosition = rectTransform.localPosition;
 
         while (Vector3.Distance(transform.localPosition, targetPosition) > 0.01f)
@@ -147,7 +150,36 @@ public class Gem : MonoBehaviour
         }
         
         transform.localPosition = targetPosition;
-        board.gemFallingCounts--;
+        board.runningCoroutines--;
         yield return null;
+    }
+
+    public  IEnumerator ShrinkAndDestroy()
+    {
+        board.runningCoroutines++;
+
+        RectTransform rectTransform = GetComponent<RectTransform>();
+        Vector3 originalScale = rectTransform.localScale;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < shrinkDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / shrinkDuration;
+            
+            // Apply the curve to get smooth shrinking
+            float curveValue = shrinkCurve.Evaluate(t);
+            rectTransform.localScale = originalScale * curveValue;
+            
+            yield return null; // Wait one frame
+        }
+        
+        // Ensure it's completely shrunk
+        rectTransform.localScale = Vector3.zero;
+        
+        // Destroy the game object
+        Destroy(gameObject);
+
+        board.runningCoroutines--;
     }
 }

@@ -11,13 +11,13 @@ public class TestBoard : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        grid = board.grid;
+        //grid = board.grid;
     }
 
     // Update is called once per frame
     void Update()
     {
-        grid = board.grid;
+        //grid = board.grid;
     }
 
     public void Recreate()

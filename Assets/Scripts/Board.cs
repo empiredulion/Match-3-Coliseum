@@ -32,10 +32,10 @@ public class Board : MonoBehaviour
     [SerializeField] List<GameObject> TilePrefabs;
     [SerializeField] private Vector2 gridOffset; // padding for the whole board
     float gemSize = 100f; // actual size is 90, 10 is for spacing
-    public Gem[,] grid;
+    Gem[,] grid;
     Gem selectedGem;
     bool isAnimating;
-    public int gemFallingCounts = 0;
+    public int runningCoroutines = 0;
     public TestBoard testBoard;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -119,15 +119,15 @@ public class Board : MonoBehaviour
 
         UnSelectCurrentGem();
 
-        ClearAllValidMatches();
+        StartCoroutine(ClearAllValidMatches());
     }
 
     Vector2 GridToWorldPosition(int x, int y)
     {
-        return new Vector2(x * gemSize, y * gemSize) + gridOffset;
+        return new Vector2((x + 0.5f) * gemSize, (y + 0.5f) * gemSize) + gridOffset;
     }
 
-    public void ClearAllValidMatches()
+    IEnumerator ClearAllValidMatches()
     {
         List<ClearableMatch> matches = GetMatches();
 
@@ -140,15 +140,23 @@ public class Board : MonoBehaviour
                     ClearGem(gem.GetX(), gem.GetY());
                 }
             }
-            StartCoroutine(FillEmptySpaces());
+
+            while (runningCoroutines > 0)
+            {
+                yield return null;
+            }
+
+            yield return FillEmptySpaces();
         }
+
+        yield return null;
     }
 
     public void ClearGem(int x, int y)
     {
         if (grid[x, y] != null)
         {
-            Destroy(grid[x, y].gameObject);
+            StartCoroutine(grid[x, y].ShrinkAndDestroy());
             grid[x, y] = null;
         }
     }
@@ -337,12 +345,13 @@ public class Board : MonoBehaviour
                 }
             }
         }
-
-        while (gemFallingCounts > 0)
+        Debug.Log("Furry 1");
+        while (runningCoroutines > 0)
         {
             yield return null;
         }
 
+        Debug.Log("Furry 2");
         // Now create new gems
         for (int x = 0; x < xDim; x++)
         {
@@ -354,13 +363,14 @@ public class Board : MonoBehaviour
                 }
             }
         }
-
-        while (gemFallingCounts > 0)
+        Debug.Log("Furry 3");
+        while (runningCoroutines > 0)
         {
             yield return null;
         }
-
-        ClearAllValidMatches();
+        Debug.Log("Furry 4");
+        
+        yield return ClearAllValidMatches();
     }
 
     public void OnPointerDown()
