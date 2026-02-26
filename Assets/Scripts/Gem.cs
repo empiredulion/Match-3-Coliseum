@@ -3,13 +3,13 @@ using System.Collections;
 
 public enum GemType
     {
-        NONE,
-        ATTACK,
-        MAGIC,
-        STAMINA,
-        MANA,
-        HEAL,
-        SHIELD
+        NONE = 0,
+        ATTACK = 1,
+        MAGIC = 2,
+        STAMINA = 3,
+        MANA = 4,
+        SHIELD = 5,
+        HEAL = 6
     }
 
 public class Gem : MonoBehaviour
@@ -22,14 +22,15 @@ public class Gem : MonoBehaviour
     Board board;
     readonly float speed = 8f;
     bool isSelected;
-
+    bool isJustMoved;
+    public (int x, int y) OldCord = (-1, -1);
     readonly float shrinkDuration = 0.3f;
     [SerializeField] AnimationCurve shrinkCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        isJustMoved = true;
     }
 
     // Update is called once per frame
@@ -85,11 +86,13 @@ public class Gem : MonoBehaviour
 
     public void OnPointerDown()
     {
-        Gem thatBitch = board.GetGem(gridX, gridY);
-        if (thatBitch != this)
-        {
-            Debug.Log("Board-chan think I'm " + thatBitch.GetX() + thatBitch.GetY());
-        }
+        // Gem thatBitch = board.GetGem(gridX, gridY);
+        // if (thatBitch != this)
+        // {
+        //     Debug.Log("Board-chan think I'm " + thatBitch.GetX() + thatBitch.GetY());
+        // }
+
+        //board.MakeBoardPlayable();
 
         if (isSelected)
         {
@@ -132,12 +135,13 @@ public class Gem : MonoBehaviour
         }
 
         rectTransform.localPosition = targetPosition;
+        isJustMoved = true;
+        ResetOldCord();
     }
 
     public IEnumerator FallMovement(Vector2 targetPosition)
     {
         board.runningCoroutines++;
-        Vector3 startPosition = rectTransform.localPosition;
 
         while (Vector3.Distance(transform.localPosition, targetPosition) > 0.01f)
         {
@@ -151,7 +155,9 @@ public class Gem : MonoBehaviour
         
         transform.localPosition = targetPosition;
         board.runningCoroutines--;
+        isJustMoved = true;
         yield return null;
+        ResetOldCord();
     }
 
     public  IEnumerator ShrinkAndDestroy()
@@ -181,5 +187,15 @@ public class Gem : MonoBehaviour
         Destroy(gameObject);
 
         board.runningCoroutines--;
+    }
+
+    public void SetIsJustMovedFalse()
+    {
+        isJustMoved = false;
+    }
+
+    public void ResetOldCord()
+    {
+        OldCord = (-1, -1);
     }
 }
