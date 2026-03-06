@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 553a07c8870c68f4090b716d0f076b64, type: 3}
+  m_Name: Player
+  m_EditorClassIdentifier: Assembly-CSharp::Gladiator
+  maxHP: 300
+  maxStamina: 100
+  maxMana: 100
+  strength: 20
+  magic: 15
+  healPerGem: 5
+  armorPerGem: 5
+  staminaPerGem: 5
+  manaPerGem: 5
+  displayName: Gladius
+  avatar: {fileID: 21300000, guid: 8360e9a577e6de64ba5354fca8a1c51d, type: 3}
+  model: {fileID: 21300000, guid: acc7ab9f1fa10204682931ab7e78f3f5, type: 3}
+  abilities:
+  - {fileID: 11400000, guid: 9dda96a7847291448ad61201345ba7db, type: 2}
+  - {fileID: 11400000, guid: 5b61a0d873b45e34babba9960cb2ab78, type: 2}
+  HPChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  StaminaChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  ManaChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  ArmorChanged:
+    m_PersistentCalls:
+      m_Calls: []

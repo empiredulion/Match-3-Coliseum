@@ -89,9 +89,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9a806a33f91c9a42be3e2b1deb1a126, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gem
-  gemType: 5
+  gemType: 6
   rectTransform: {fileID: 1127616900404731294}
-  shrinkDuration: 0.5
   shrinkCurve:
     serializedVersion: 2
     m_Curve:

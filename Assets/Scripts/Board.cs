@@ -20,6 +20,7 @@ public class Board : MonoBehaviour
     public int runningCoroutines = 0;
     System.Random random = new();
     List<GemType> gemTypes = new();
+    public TotalClearedGems totalClearedGems = new();
     public TestBoard testBoard;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -109,25 +110,37 @@ public class Board : MonoBehaviour
         int colDiff = Mathf.Abs(selectedGem.GetY() - inNewGem.GetY());
         return (rowDiff + colDiff) == 1;
     }
-    public IEnumerator SwapGem(Gem inNewGem)
+    public IEnumerator SwapGem(Gem gem1, Gem gem2, bool isPlayerTurn)
     {
-        int x1 = selectedGem.GetX();
-        int y1 = selectedGem.GetY();
-        int x2 = inNewGem.GetX();
-        int y2 = inNewGem.GetY();
+        TurnMaster.GetInstance().runningCoroutines++;
 
-        StartCoroutine(selectedGem.SwapMovement(GridToWorldPosition(x2, y2)));
-        yield return inNewGem.SwapMovement(GridToWorldPosition(x1, y1));
+        int x1 = gem1.GetX();
+        int y1 = gem1.GetY();
+        int x2 = gem2.GetX();
+        int y2 = gem2.GetY();
 
-        inNewGem.AssignPosition(x1, y1);
-        selectedGem.AssignPosition(x2, y2);
-        grid[x1, y1] = inNewGem;
-        grid[x2, y2] = selectedGem;
+        StartCoroutine(gem1.SwapMovement(GridToWorldPosition(x2, y2)));
+        yield return gem2.SwapMovement(GridToWorldPosition(x1, y1));
+
+        gem2.AssignPosition(x1, y1);
+        gem1.AssignPosition(x2, y2);
+        grid[x1, y1] = gem2;
+        grid[x2, y2] = gem1;
 
         UnSelectCurrentGem();
 
         StartCoroutine(ClearAllValidMatches());
-        StartCoroutine(TurnMaster.GetInstance().ProcessAction());
+        if (isPlayerTurn)
+        {
+            StartCoroutine(TurnMaster.GetInstance().ProcessAction());
+        }
+
+        TurnMaster.GetInstance().runningCoroutines--;
+    }
+
+    public IEnumerator SwapGem(Gem inGem)
+    {
+        yield return SwapGem(inGem, selectedGem, true);
     }
 
     void SwapGemNoAnim(int x1, int y1, int x2, int y2)
@@ -139,7 +152,7 @@ public class Board : MonoBehaviour
         grid[x1, y1].gameObject.transform.localPosition = GridToWorldPosition(x1, y1);
         grid[x2, y2].gameObject.transform.localPosition = GridToWorldPosition(x2, y2);
 
-        Debug.Log("Furry Swap Gems at: " + x1 + " " + y1 + " and " + x2 + " " + y2);
+        //Debug.Log("Furry Swap Gems at: " + x1 + " " + y1 + " and " + x2 + " " + y2);
     }
 
     Vector2 GridToWorldPosition(int x, int y)
@@ -149,16 +162,15 @@ public class Board : MonoBehaviour
 
     IEnumerator ClearAllValidMatches()
     {
+        TurnMaster.GetInstance().runningCoroutines++;
+
         List<ClearableMatch> matches = GetMatches();
 
         if (matches.Count > 0)
         {
             foreach (ClearableMatch match in matches)
             {
-                foreach (Gem gem in match.gems)
-                {
-                    ClearGem(gem.GetX(), gem.GetY());
-                }
+                PopGems(match);
             }
 
             while (runningCoroutines > 0)
@@ -170,6 +182,17 @@ public class Board : MonoBehaviour
         }
 
         yield return null;
+
+        TurnMaster.GetInstance().runningCoroutines--;
+    }
+
+    void PopGems(ClearableMatch inMatch)
+    {
+        TurnMaster.GetInstance().PopGems(inMatch.gems[0].GetGemType(), inMatch.gemCount);
+        foreach (Gem gem in inMatch.gems)
+        {
+            ClearGem(gem.GetX(), gem.GetY());
+        }
     }
 
     public void ClearGem(int x, int y)
@@ -310,7 +333,7 @@ public class Board : MonoBehaviour
         }
 
         watch.Stop();
-        Debug.Log("Furry milliseconds: " + watch.ElapsedTicks);
+        //Debug.Log("Furry milliseconds: " + watch.ElapsedTicks);
 
         //Merge match
         List<ClearableMatch> finalMatches = new();
@@ -349,6 +372,8 @@ public class Board : MonoBehaviour
 
     IEnumerator FillEmptySpaces()
     {
+        TurnMaster.GetInstance().runningCoroutines++;
+
         for (int x = 0; x < xDim; x++)
         {
             // Fall first
@@ -394,10 +419,12 @@ public class Board : MonoBehaviour
         }
         
         yield return ClearAllValidMatches();
+
+        TurnMaster.GetInstance().runningCoroutines--;
     }
 
     // Link for ref: https://gamedev.stackexchange.com/questions/84501/how-to-implement-a-hint-system-for-nearby-matches-in-a-match-3-puzzle-game
-    public void FindPotentialMatches()
+    public PotentialMatch FindPotentialMatches()
     {
         List<PotentialMatch> bestMatches = new();
         for (int y = 0; y < yDim; y++)
@@ -437,7 +464,7 @@ public class Board : MonoBehaviour
 
                 if (gemN && gemN.GetGemType() == currentType)
                 {
-                    if (grid[x, y+2].GetGemType() == currentType)
+                    if (grid[x, y+3].GetGemType() == currentType)
                     {
                         matchNN01 = true;
                     }
@@ -453,7 +480,7 @@ public class Board : MonoBehaviour
 
                 if (gemS && gemS.GetGemType() == currentType)
                 {
-                    if (grid[x, y-2].GetGemType() == currentType)
+                    if (grid[x, y-3].GetGemType() == currentType)
                     {
                         matchSS07 = true;
                     }
@@ -541,19 +568,31 @@ public class Board : MonoBehaviour
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y+1], 6, currentType));
                     }
-                    else if (matchNE03 || matchNW11)
+                    else if (matchNE03 || matchNW11 || matchWNE)
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y+1], 5, currentType));
-                    }
-                    else if ((matchWNE && matchNE03 && !matchNW11) || (matchWNE && !matchNE03 && matchNW11))
-                    {
-                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y+1], 4, currentType));
                     }
                     else
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y+1], 3, currentType));
                     }
                 }
+                else
+                {
+                    if (matchNE03 && matchNW11)
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y+1], 5, currentType));
+                    }
+                    else if (matchWNE && (matchNE03 || matchNW11))
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y+1], 4, currentType));
+                    }
+                    else if (matchNE03 || matchNW11 || matchWNE)
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y+1], 3, currentType));
+                    }
+                }
+                
 
                 if (matchEE04)
                 {
@@ -565,15 +604,26 @@ public class Board : MonoBehaviour
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x+1, y], 6, currentType));
                     }
-                    else if (matchNE02 || matchSE06)
+                    else if (matchNE02 || matchSE06 || matchNSE)
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x+1, y], 5, currentType));
                     }
-                    else if ((matchNSE && matchNE02 && !matchSE06) || (matchNSE && !matchNE02 && matchSE06))
+                    else
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x+1, y], 3, currentType));
+                    }
+                }
+                else
+                {
+                    if (matchNE02 && matchSE06)
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x+1, y], 5, currentType));
+                    }
+                    else if (matchNSE && (matchNE02 || matchSE06))
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x+1, y], 4, currentType));
                     }
-                    else
+                    else if (matchNE02 || matchSE06 || matchNSE)
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x+1, y], 3, currentType));
                     }
@@ -589,15 +639,26 @@ public class Board : MonoBehaviour
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y-1], 6, currentType));
                     }
-                    else if (matchSE05 || matchSW09)
+                    else if (matchSE05 || matchSW09 || matchESW)
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y-1], 5, currentType));
                     }
-                    else if ((matchESW && matchSW09 && !matchSE05) || (matchESW && !matchSW09 && matchSE05))
+                    else
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y-1], 3, currentType));
+                    }
+                }
+                else
+                {
+                    if (matchSE05 && matchSW09)
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y-1], 5, currentType));
+                    }
+                    else if (matchESW && (matchSE05 || matchSW09))
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y-1], 4, currentType));
                     }
-                    else
+                    else if (matchSE05 || matchSW09 || matchESW)
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x, y-1], 3, currentType));
                     }
@@ -613,15 +674,26 @@ public class Board : MonoBehaviour
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x-1, y], 6, currentType));
                     }
-                    else if (matchSW08 || matchNW12)
+                    else if (matchSW08 || matchNW12 || matchSWN)
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x-1, y], 5, currentType));
                     }
-                    else if ((matchSWN && matchSW08 && !matchNW12) || (matchSWN && !matchSW08 && matchNW12))
+                    else
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x-1, y], 3, currentType));
+                    }
+                }
+                else
+                {
+                    if (matchSW08 && matchNW12)
+                    {
+                        potentialMatches.Add(new PotentialMatch(currentGem, grid[x-1, y], 5, currentType));
+                    }
+                    else if (matchSWN && (matchSW08 || matchNW12))
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x-1, y], 4, currentType));
                     }
-                    else
+                    else if (matchSW08 || matchNW12 || matchSWN)
                     {
                         potentialMatches.Add(new PotentialMatch(currentGem, grid[x-1, y], 3, currentType));
                     }
@@ -644,10 +716,11 @@ public class Board : MonoBehaviour
         if (bestMatches.Count > 0)
         {
             bestOfBests = bestMatches.OrderByDescending(x => x.gemCount)
-                                    .ThenByDescending(x => x.gemType)
+                                    .ThenBy(x => x.gemType)
                                     .First();
         }
-        return;
+
+        return bestOfBests;
     }
 
     void RandomizeBoard()
@@ -663,6 +736,11 @@ public class Board : MonoBehaviour
             int jCol = j % xDim;
 
             SwapGemNoAnim(iRow, iCol, jRow, jCol);
+        }
+
+        if (FindPotentialMatches() == null)
+        {
+            RandomizeBoard();
         }
     }
 
@@ -739,6 +817,14 @@ public class Board : MonoBehaviour
 
             MakeBoardPlayable();
         }
+        else
+        {
+            PotentialMatch bestMatch = FindPotentialMatches();
+            if (bestMatch == null)
+            {
+                RandomizeBoard();
+            }
+        }
     }
 
     public void OnPointerDown()
@@ -798,5 +884,16 @@ public class Board : MonoBehaviour
     {
         yield return _waitForSeconds2;
         MakeBoardPlayable();
+    }
+
+    public void AIAct()
+    {
+        PotentialMatch bestMove = FindPotentialMatches();
+        StartCoroutine(SwapGem(bestMove.mainGem, bestMove.swapGem, false));
+    }
+
+    public void FindMatchesButton()
+    {
+        FindPotentialMatches();
     }
 }

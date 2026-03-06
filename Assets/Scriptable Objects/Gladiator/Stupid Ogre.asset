@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 553a07c8870c68f4090b716d0f076b64, type: 3}
+  m_Name: Stupid Ogre
+  m_EditorClassIdentifier: Assembly-CSharp::Gladiator
+  maxHP: 500
+  maxStamina: 100
+  maxMana: 100
+  strength: 25
+  magic: 5
+  healPerGem: 5
+  armorPerGem: 5
+  staminaPerGem: 5
+  manaPerGem: 5
+  displayName: Stupid Ogre
+  avatar: {fileID: 21300000, guid: 0bee14dac7511d74ca9d5ed5dcc0e208, type: 3}
+  model: {fileID: 21300000, guid: 0a523915700695142aa09490f266c446, type: 3}
+  abilities:
+  - {fileID: 11400000, guid: fab175b0e19e84e4d9f6e2492a6272f2, type: 2}
+  HPChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  StaminaChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  ManaChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  ArmorChanged:
+    m_PersistentCalls:
+      m_Calls: []
