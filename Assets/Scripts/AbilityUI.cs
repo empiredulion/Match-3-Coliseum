@@ -44,20 +44,18 @@ public class AbilityUI : MonoBehaviour
 
     void UpdateAbilityState(int change)
     {
-        button.interactable = TurnMaster.GetInstance().GetIsPlayerTurn() && !gladiator.GetHasUsedAbilityThisTurn() && gladiator.currentStamina >= ability.GetCost();
+        bool canAct = TurnMaster.GetInstance().GetIsPlayerTurn() && !gladiator.GetHasUsedAbilityThisTurn();
+
+        button.interactable = canAct && gladiator.HasEnoughToUseAbility(ability);
     }
 
     void TurnEnd()
     {
-        button.interactable = gladiator.currentStamina >= ability.GetCost();
+        button.interactable = gladiator.HasEnoughToUseAbility(ability);
     }
 
     public void OnPointerDown()
     {
-        if (!gladiator.GetHasUsedAbilityThisTurn())
-        {
-            TurnMaster.GetInstance().TriggerAbility(gladiator, ability);
-            gladiator.SetHasUsedAbilityThisTurn(true);
-        }
+        gladiator.UseAbility(ability);
     }
 }

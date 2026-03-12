@@ -27,6 +27,7 @@ MonoBehaviour:
   abilities:
   - {fileID: 11400000, guid: 9dda96a7847291448ad61201345ba7db, type: 2}
   - {fileID: 11400000, guid: 5b61a0d873b45e34babba9960cb2ab78, type: 2}
+  - {fileID: 11400000, guid: 4179fc04e185b34458e806cff474ee9f, type: 2}
   HPChanged:
     m_PersistentCalls:
       m_Calls: []

@@ -26,6 +26,7 @@ MonoBehaviour:
   model: {fileID: 21300000, guid: 0a523915700695142aa09490f266c446, type: 3}
   abilities:
   - {fileID: 11400000, guid: fab175b0e19e84e4d9f6e2492a6272f2, type: 2}
+  fightingStyle: {fileID: 11400000, guid: a595b05a423629f49ad0f4b57328d8bd, type: 2}
   HPChanged:
     m_PersistentCalls:
       m_Calls: []

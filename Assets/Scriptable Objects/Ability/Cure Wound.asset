@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52c8160c8b1a4484b9a12cc71aa85d33, type: 3}
+  m_Name: Cure Wound
+  m_EditorClassIdentifier: Assembly-CSharp::CureWound
+  abilityName: Cure Wound
+  icon: {fileID: 21300000, guid: 319e16ea5afd4b940930c811e052b8b6, type: 3}
+  requiredResource: 1
+  cost: 50
+  description: Heal yourself for {0}.
+  heal: 50

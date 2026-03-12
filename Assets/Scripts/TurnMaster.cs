@@ -2,6 +2,13 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
+public enum MatchState
+{
+    ON_GOING,
+    PLAYER_1_WON,
+    PLAYER_2_WON    
+}
+
 public class TurnMaster : MonoBehaviour
 {
     bool isPlayerTurn = false;
@@ -15,6 +22,8 @@ public class TurnMaster : MonoBehaviour
     [SerializeField] Board board;
 
     [HideInInspector] public UnityEvent TurnEnds;
+
+    MatchState matchState;
     private static TurnMaster instance;
 
     private void Awake() {
@@ -44,11 +53,13 @@ public class TurnMaster : MonoBehaviour
     {
         isPlayerTurn = true;
 
-        player1.StartMatch();
-        player2.StartMatch();
+        player1.StartMatch(board);
+        player2.StartMatch(board);
 
         gladiatorUI1.AssignGladiator(player1, true);
         gladiatorUI2.AssignGladiator(player2, false);
+
+        matchState = MatchState.ON_GOING;
     }
 
     public IEnumerator ProcessAction()
@@ -61,8 +72,7 @@ public class TurnMaster : MonoBehaviour
         }
 
         isPlayerTurn = false;
-        board.totalClearedGems.Clear();
-        board.AIAct();
+        player2.Act();
 
         while (runningCoroutines > 0)
         {
@@ -71,7 +81,6 @@ public class TurnMaster : MonoBehaviour
 
         isPlayerTurn = true;
         EnableBoard(true);
-        board.totalClearedGems.Clear();
         EndTurn();
     }
 
@@ -94,6 +103,16 @@ public class TurnMaster : MonoBehaviour
     public bool GetIsPlayerTurn()
     {
         return isPlayerTurn;
+    }
+
+    public void PlayerDead(Gladiator inPlayer)
+    {
+        matchState = inPlayer == player1 ? MatchState.PLAYER_2_WON : MatchState.PLAYER_1_WON;
+    }
+
+    public bool IsMatchFinished()
+    {
+        return !(matchState == MatchState.ON_GOING);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -2,8 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
-using System;
-using System.Runtime.InteropServices;
 
 public class Board : MonoBehaviour
 {
@@ -20,7 +18,6 @@ public class Board : MonoBehaviour
     public int runningCoroutines = 0;
     System.Random random = new();
     List<GemType> gemTypes = new();
-    public TotalClearedGems totalClearedGems = new();
     public TestBoard testBoard;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -110,7 +107,8 @@ public class Board : MonoBehaviour
         int colDiff = Mathf.Abs(selectedGem.GetY() - inNewGem.GetY());
         return (rowDiff + colDiff) == 1;
     }
-    public IEnumerator SwapGem(Gem gem1, Gem gem2, bool isPlayerTurn)
+
+    IEnumerator SwapGem(Gem gem1, Gem gem2, bool isPlayerTurn)
     {
         TurnMaster.GetInstance().runningCoroutines++;
 
@@ -141,6 +139,11 @@ public class Board : MonoBehaviour
     public IEnumerator SwapGem(Gem inGem)
     {
         yield return SwapGem(inGem, selectedGem, true);
+    }
+
+    public void SwapGem_ExternalCall(Gem gem1, Gem gem2, bool isPlayerTurn)
+    {
+        StartCoroutine(SwapGem(gem1, gem2, isPlayerTurn));
     }
 
     void SwapGemNoAnim(int x1, int y1, int x2, int y2)
@@ -424,7 +427,7 @@ public class Board : MonoBehaviour
     }
 
     // Link for ref: https://gamedev.stackexchange.com/questions/84501/how-to-implement-a-hint-system-for-nearby-matches-in-a-match-3-puzzle-game
-    public PotentialMatch FindPotentialMatches()
+    public List<PotentialMatch> FindPotentialMatches()
     {
         List<PotentialMatch> bestMatches = new();
         for (int y = 0; y < yDim; y++)
@@ -712,15 +715,15 @@ public class Board : MonoBehaviour
             }
         }
 
-        PotentialMatch bestOfBests = null;
-        if (bestMatches.Count > 0)
-        {
-            bestOfBests = bestMatches.OrderByDescending(x => x.gemCount)
-                                    .ThenBy(x => x.gemType)
-                                    .First();
-        }
+        // PotentialMatch bestOfBests = null;
+        // if (bestMatches.Count > 0)
+        // {
+        //     bestOfBests = bestMatches.OrderByDescending(x => x.gemCount)
+        //                             .ThenBy(x => x.gemType)
+        //                             .First();
+        // }
 
-        return bestOfBests;
+        return bestMatches;
     }
 
     void RandomizeBoard()
@@ -738,7 +741,7 @@ public class Board : MonoBehaviour
             SwapGemNoAnim(iRow, iCol, jRow, jCol);
         }
 
-        if (FindPotentialMatches() == null)
+        if (FindPotentialMatches().Count == 0)
         {
             RandomizeBoard();
         }
@@ -819,8 +822,7 @@ public class Board : MonoBehaviour
         }
         else
         {
-            PotentialMatch bestMatch = FindPotentialMatches();
-            if (bestMatch == null)
+            if (FindPotentialMatches().Count == 0)
             {
                 RandomizeBoard();
             }
@@ -888,8 +890,8 @@ public class Board : MonoBehaviour
 
     public void AIAct()
     {
-        PotentialMatch bestMove = FindPotentialMatches();
-        StartCoroutine(SwapGem(bestMove.mainGem, bestMove.swapGem, false));
+        //PotentialMatch bestMove = FindPotentialMatches();
+        //StartCoroutine(SwapGem(bestMove.mainGem, bestMove.swapGem, false));
     }
 
     public void FindMatchesButton()

@@ -2,15 +2,15 @@ using UnityEngine;
 using System.Collections;
 
 public enum GemType
-    {
-        NONE = 0,
-        ATTACK = 1,
-        MAGIC = 2,
-        STAMINA = 3,
-        MANA = 4,
-        SHIELD = 5,
-        HEAL = 6
-    }
+{
+    NONE = 0,
+    ATTACK = 1,
+    MAGIC = 2,
+    STAMINA = 3,
+    MANA = 4,
+    SHIELD = 5,
+    HEAL = 6
+}
 
 public class Gem : MonoBehaviour
 {

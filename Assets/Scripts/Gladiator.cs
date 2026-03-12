@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using System.Linq;
 
 public delegate void Notify(int damage);
 
@@ -31,13 +33,17 @@ public class Gladiator : ScriptableObject
     public Sprite avatar;
     public Sprite model;
 
+    [Header("Other")]
     public List<Ability> abilities = new();
-    bool hasUsedAbilityThisTurn = false;
+    [SerializeField] FightingStyle fightingStyle;
 
     [HideInInspector] public UnityEvent<int> HPChanged;
     [HideInInspector] public UnityEvent<int> StaminaChanged;
     [HideInInspector] public UnityEvent<int> ManaChanged;
     [HideInInspector] public UnityEvent<int> ArmorChanged;
+
+    bool hasUsedAbilityThisTurn = false;
+    Board board;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -51,13 +57,14 @@ public class Gladiator : ScriptableObject
         
     }
 
-    public void StartMatch()
+    public void StartMatch(Board inboard)
     {
         currentHP = maxHP;
         currentStamina = 100;
         currentMana = 0;
         currentArmor = 0;
         hasUsedAbilityThisTurn = false;
+        board = inboard;
 
         TurnMaster.GetInstance().TurnEnds.AddListener(TurnEnd);
     }
@@ -148,16 +155,12 @@ public class Gladiator : ScriptableObject
 
     public void PopHealGems(int inAmount)
     {
-        int changedHP = inAmount * healPerGem;
-        int newHP = currentHP + changedHP;
-        currentHP = newHP > maxHP ? maxHP : newHP;
-        HPChanged?.Invoke(changedHP);
+        GainHeal(inAmount * healPerGem);
     }
 
     public void PopShieldGems(int inAmount)
     {
-        int changedArmor = inAmount * armorPerGem;
-        GainArmor(changedArmor);
+        GainArmor(inAmount * armorPerGem);
     }
 
     public void PopStaminaGems(int inAmount)
@@ -171,7 +174,7 @@ public class Gladiator : ScriptableObject
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Fighting
+// Stat calculating
     public void DealPhysicalDamage(float inDamage)
     {
         TurnMaster.GetInstance().DealPhysicalDamage(inDamage);
@@ -181,6 +184,13 @@ public class Gladiator : ScriptableObject
     {
         currentArmor += inArmor;
         ArmorChanged?.Invoke(inArmor);
+    }
+
+    public void GainHeal(int inHeal)
+    {
+        int newHP = currentHP + inHeal;
+        currentHP = newHP > maxHP ? maxHP : newHP;
+        HPChanged?.Invoke(inHeal);
     }
 
     public void StaminaChange(int amount)
@@ -207,8 +217,9 @@ public class Gladiator : ScriptableObject
 
         if (remainingDamage >= currentHP)
         {
+            currentHP = 0;
             HPChanged?.Invoke(-currentHP);
-            // Handle death too
+            TurnMaster.GetInstance().PlayerDead(this);
         }
         else
         {
@@ -238,6 +249,53 @@ public class Gladiator : ScriptableObject
             currentArmor -= damage;
             ArmorChanged?.Invoke(-damage);
             return 0;
+        }
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Choosing next move
+    public PotentialMatch ChooseBestMatch(List<PotentialMatch> inBestMatches)
+    {
+        return inBestMatches
+            .OrderByDescending(m => m.gemCount)
+            .ThenBy(m => Array.IndexOf(fightingStyle.gemTypePriorities, m.gemType))
+            .First();
+    }
+
+    public void Act()
+    {
+        List<Ability> usableAbilities = GetUsableAbilities();
+        if (usableAbilities.Count > 0)
+        {
+            UseAbility(usableAbilities[0]);
+        }
+
+        PotentialMatch bestMove = ChooseBestMatch(board.FindPotentialMatches());
+        board.SwapGem_ExternalCall(bestMove.mainGem, bestMove.swapGem, false);
+    }
+
+    public bool HasEnoughToUseAbility(Ability a)
+    {
+        return a.GetRequiredResource() == RequiredResource.STAMINA ? currentStamina >= a.GetCost() : currentMana >= a.GetCost();
+    }
+
+    public List<Ability> GetUsableAbilities()
+    {
+        List<Ability> usableAbilities = new();
+        foreach (Ability a in abilities)
+        {
+            if (HasEnoughToUseAbility(a)) usableAbilities.Add(a);
+        }
+
+        return usableAbilities;
+    }
+
+    public void UseAbility(Ability a)
+    {
+        if (!GetHasUsedAbilityThisTurn())
+        {
+            TurnMaster.GetInstance().TriggerAbility(this, a);
+            SetHasUsedAbilityThisTurn(true);
         }
     }
 }
