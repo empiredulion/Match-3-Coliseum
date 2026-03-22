@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using System.Linq;
@@ -262,8 +263,12 @@ public class Gladiator : ScriptableObject
             .First();
     }
 
-    public void Act()
+    public IEnumerator Act() // Change to coroutine
     {
+        TurnMaster.GetInstance().isPlayerTurn = false;
+
+        yield return new WaitForSeconds(1);
+
         List<Ability> usableAbilities = GetUsableAbilities();
         if (usableAbilities.Count > 0)
         {
@@ -272,6 +277,8 @@ public class Gladiator : ScriptableObject
 
         PotentialMatch bestMove = ChooseBestMatch(board.FindPotentialMatches());
         board.SwapGem_ExternalCall(bestMove.mainGem, bestMove.swapGem, false);
+        TurnMaster.GetInstance().EnqueueChangeTurn(true);
+        yield return null;
     }
 
     public bool HasEnoughToUseAbility(Ability a)
@@ -294,7 +301,7 @@ public class Gladiator : ScriptableObject
     {
         if (!GetHasUsedAbilityThisTurn())
         {
-            TurnMaster.GetInstance().TriggerAbility(this, a);
+            TurnMaster.GetInstance().EnqueueAction(a.TriggerAbility(this));
             SetHasUsedAbilityThisTurn(true);
         }
     }

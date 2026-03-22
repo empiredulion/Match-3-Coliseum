@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,7 +12,7 @@ public enum MatchState
 
 public class TurnMaster : MonoBehaviour
 {
-    bool isPlayerTurn = false;
+    public bool isPlayerTurn = false;
     public int runningCoroutines = 0;
 
     [SerializeField] Gladiator player1;
@@ -23,7 +24,11 @@ public class TurnMaster : MonoBehaviour
 
     [HideInInspector] public UnityEvent TurnEnds;
 
+    Queue<IEnumerator> PendingActions = new();
+    Coroutine currentRunningCoroutine = null;
+
     MatchState matchState;
+
     private static TurnMaster instance;
 
     private void Awake() {
@@ -64,12 +69,14 @@ public class TurnMaster : MonoBehaviour
 
     public IEnumerator ProcessAction()
     {
-        EnableBoard(false);
+        //EnableBoard(false);
         
         while (runningCoroutines > 0)
         {
             yield return null;
         }
+
+        Debug.Log("From TurnMaster: runningCoroutines = 0");
 
         isPlayerTurn = false;
         player2.Act();
@@ -80,19 +87,55 @@ public class TurnMaster : MonoBehaviour
         }
 
         isPlayerTurn = true;
-        EnableBoard(true);
+        //EnableBoard(true);
         EndTurn();
     }
 
-    public void LetPlayerAct()
+    public void EnqueueAction(IEnumerator coroutine)
     {
-        EnableBoard(false);
-        isPlayerTurn = true;
+        LetPlayerAct(false);
+
+        PendingActions.Enqueue(coroutine);
+
+        currentRunningCoroutine ??= StartCoroutine(CoroutineCoordinator());
     }
 
-    void EnableBoard(bool isEnabled)
+    private IEnumerator CoroutineCoordinator()
     {
-        BoardBlocker.SetActive(!isEnabled);
+        while (PendingActions.Count > 0)
+        {
+            if (matchState != MatchState.ON_GOING)
+            {
+                PendingActions.Clear();
+                ShowMatchResult();
+                break;
+            }
+
+            IEnumerator nextCoroutine = PendingActions.Dequeue();
+            yield return StartCoroutine(nextCoroutine);
+        }
+
+        currentRunningCoroutine = null;
+        yield return LetPlayerAct(true);
+    }
+
+    public IEnumerator LetPlayerAct(bool b)
+    {
+        BoardBlocker.SetActive(!b);
+        isPlayerTurn = b;
+        yield return null;
+    }
+
+    public void EnqueueChangeTurn(bool isPlayerTurnNext)
+    {
+        if (isPlayerTurnNext)
+        {
+            EnqueueAction(LetPlayerAct(true));
+        }
+        else
+        {
+            EnqueueAction(player2.Act());
+        }
     }
 
     void EndTurn()
@@ -115,6 +158,12 @@ public class TurnMaster : MonoBehaviour
         return !(matchState == MatchState.ON_GOING);
     }
 
+    void ShowMatchResult()
+    {
+        //Trigger pop up
+        Debug.Log("Match ends");
+    }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Gladiators
     public void PopGems(GemType type, int num)
@@ -127,11 +176,6 @@ public class TurnMaster : MonoBehaviour
         {
             player2.PopGems(type, num);
         }
-    }
-
-    public void TriggerAbility(Gladiator inGladiator, Ability inAbility)
-    {
-        StartCoroutine(inAbility.TriggerAbility(inGladiator));
     }
 
     public void DealPhysicalDamage(float inDamage)

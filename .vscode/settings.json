@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Match-3 Coliseum.slnx"
+    "dotnet.defaultSolution": "Match-3-Coliseum.slnx"
 }

@@ -18,7 +18,12 @@ public class Board : MonoBehaviour
     public int runningCoroutines = 0;
     System.Random random = new();
     List<GemType> gemTypes = new();
+
+    //List<(int row, int column, int gemType, int heightOffset)> PendingGems = new();
+    List<(Gem gem, int heightOffset)> PendingGems = new();
+
     public TestBoard testBoard;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -31,12 +36,15 @@ public class Board : MonoBehaviour
 
         grid = new Gem[xDim, yDim];
         for (int row = 0; row < xDim; row++) {
+            int heightOffset = yDim;
             for (int column = 0; column < yDim; column++) {
-                MakeNewGem(row, column);
+                PendingGems.Add((MakeNewGem(row, column, heightOffset), heightOffset));
+                heightOffset++;
             }
         }
 
         MakeBoardPlayable();
+        PlacePendingGems();
 
         // for (int x = 0; x < xDim; x++)
         // {
@@ -62,24 +70,41 @@ public class Board : MonoBehaviour
         return grid[x, y];
     }
 
-    void MakeNewGem(int x, int y) {
-        Vector3 tile_pos = GridToWorldPosition(x, y);
-        GameObject newTile = Instantiate(TilePrefabs[UnityEngine.Random.Range(0, TilePrefabs.Count)], tile_pos, Quaternion.identity);
+    // void MakeNewGem(int x, int y) {
+    //     Vector3 tile_pos = GridToWorldPosition(x, y);
+    //     GameObject newTile = Instantiate(TilePrefabs[UnityEngine.Random.Range(0, TilePrefabs.Count)], tile_pos, Quaternion.identity);
+    //     newTile.transform.SetParent(boardTransform, false);
+                    
+    //     grid[x, y] = newTile.GetComponent<Gem>();
+    //     grid[x, y].GetComponent<Gem>().AssignPosition(x, y);
+    //     grid[x, y].GetComponent<Gem>().AssignBoard(this);
+    // }
+
+    Gem MakeNewGem(int x, int y, int heightOffset, int inType = -1) {
+        Vector3 tile_pos = GridToWorldPosition(x, y + heightOffset);
+        GameObject gemMold = TilePrefabs[inType > 0 ? inType : UnityEngine.Random.Range(0, TilePrefabs.Count)];
+        GameObject newTile = Instantiate(gemMold, tile_pos, Quaternion.identity);
         newTile.transform.SetParent(boardTransform, false);
                     
         grid[x, y] = newTile.GetComponent<Gem>();
-        grid[x, y].GetComponent<Gem>().AssignPosition(x, y);
-        grid[x, y].GetComponent<Gem>().AssignBoard(this);
+        grid[x, y].AssignPosition(x, y);
+        grid[x, y].AssignBoard(this);
+        grid[x, y].heightOffset = heightOffset;
+
+        //StartCoroutine(grid[x, y].SwapMovement(GridToWorldPosition(x, y)));
+        return grid[x, y];
     }
 
-    void MakeNewGem(int x, int y, int inType) {
-        Vector3 tile_pos = GridToWorldPosition(x, y);
-        GameObject newTile = Instantiate(TilePrefabs[inType], tile_pos, Quaternion.identity);
-        newTile.transform.SetParent(boardTransform, false);
-                    
-        grid[x, y] = newTile.GetComponent<Gem>();
-        grid[x, y].GetComponent<Gem>().AssignPosition(x, y);
-        grid[x, y].GetComponent<Gem>().AssignBoard(this);
+    void PlacePendingGems()
+    {
+        foreach (var gem in PendingGems)
+        {
+            //MakeNewGem(gem.row, gem.column, gem.heightOffset, gem.gemType);
+            gem.gem.gameObject.transform.localPosition = GridToWorldPosition(gem.gem.GetX(), gem.gem.GetY() + gem.heightOffset);
+            StartCoroutine(gem.gem.FallMovement());
+        }
+
+        PendingGems.Clear();
     }
 
     public bool IsOneGemAlreadySelected()
@@ -127,10 +152,12 @@ public class Board : MonoBehaviour
 
         UnSelectCurrentGem();
 
-        StartCoroutine(ClearAllValidMatches());
+        //StartCoroutine(ClearAllValidMatches());
+        yield return ClearAllValidMatches();
+
         if (isPlayerTurn)
         {
-            StartCoroutine(TurnMaster.GetInstance().ProcessAction());
+            //StartCoroutine(TurnMaster.GetInstance().ProcessAction());
         }
 
         TurnMaster.GetInstance().runningCoroutines--;
@@ -143,7 +170,7 @@ public class Board : MonoBehaviour
 
     public void SwapGem_ExternalCall(Gem gem1, Gem gem2, bool isPlayerTurn)
     {
-        StartCoroutine(SwapGem(gem1, gem2, isPlayerTurn));
+        TurnMaster.GetInstance().EnqueueAction(SwapGem(gem1, gem2, isPlayerTurn));
     }
 
     void SwapGemNoAnim(int x1, int y1, int x2, int y2)
@@ -154,11 +181,11 @@ public class Board : MonoBehaviour
 
         grid[x1, y1].gameObject.transform.localPosition = GridToWorldPosition(x1, y1);
         grid[x2, y2].gameObject.transform.localPosition = GridToWorldPosition(x2, y2);
-
+        Debug.Log("SwapGemNoAnim");
         //Debug.Log("Furry Swap Gems at: " + x1 + " " + y1 + " and " + x2 + " " + y2);
     }
 
-    Vector2 GridToWorldPosition(int x, int y)
+    public Vector2 GridToWorldPosition(int x, int y)
     {
         return new Vector2((x + 0.5f) * gemSize, (y + 0.5f) * gemSize) + gridOffset;
     }
@@ -220,7 +247,7 @@ public class Board : MonoBehaviour
         {
             int x = 0;
             GemType currentType = GemType.NONE;
-
+            
             while (x < xDim)
             {
                 Gem currentGem = grid[x, y];
@@ -392,8 +419,8 @@ public class Board : MonoBehaviour
                     if (moveDownSteps > 0)
                     { // Probabaly more efficient
                         Gem gem = grid[x, y];
-                        StartCoroutine(gem.FallMovement(GridToWorldPosition(x, y - moveDownSteps)));
                         gem.AssignPosition(x, y - moveDownSteps);
+                        StartCoroutine(gem.FallMovement());
                         grid[x, y - moveDownSteps] = gem;
                         grid[x, y] = null;
                     }
@@ -412,17 +439,22 @@ public class Board : MonoBehaviour
             {
                 if (grid[x, y] == null)
                 {
-                    MakeNewGem(x, y);
+                    PendingGems.Add((MakeNewGem(x, y, 2), 2));
                 }
             }
         }
+        PlacePendingGems();
+
         while (runningCoroutines > 0)
         {
             yield return null;
         }
         
+        //Debug.Log("From Board 1: TurnMaster runningCoroutines = " + TurnMaster.GetInstance().runningCoroutines);
+
         yield return ClearAllValidMatches();
 
+        //Debug.Log("From Board 2: TurnMaster runningCoroutines = " + TurnMaster.GetInstance().runningCoroutines);
         TurnMaster.GetInstance().runningCoroutines--;
     }
 
@@ -857,10 +889,12 @@ public class Board : MonoBehaviour
             randomGemTypes.Remove(grid[gX, gY-1].GetGemType());
         }
 
+        int temp = grid[gX, gY].heightOffset;
         Destroy(grid[gX, gY].gameObject);
         grid[gX, gY] = null;
 
-        MakeNewGem(gX, gY, UnityEngine.Random.Range(0, randomGemTypes.Count));
+        MakeNewGem(gX, gY, temp, UnityEngine.Random.Range(0, randomGemTypes.Count));
+        //PendingGems.Add((gX, gY, ))
     }
 
     public void ResetBoard()
@@ -875,9 +909,11 @@ public class Board : MonoBehaviour
         grid = new Gem[xDim, yDim];
         for (int row = 0; row < xDim; row++) {
             for (int column = 0; column < yDim; column++) {
-                MakeNewGem(row, column);
+                ;
+                PendingGems.Add((MakeNewGem(row, column, 0), 0));
             }
         }
+        PlacePendingGems();
 
         StartCoroutine(ResetBoardCoroutine());
     }
@@ -886,12 +922,6 @@ public class Board : MonoBehaviour
     {
         yield return _waitForSeconds2;
         MakeBoardPlayable();
-    }
-
-    public void AIAct()
-    {
-        //PotentialMatch bestMove = FindPotentialMatches();
-        //StartCoroutine(SwapGem(bestMove.mainGem, bestMove.swapGem, false));
     }
 
     public void FindMatchesButton()

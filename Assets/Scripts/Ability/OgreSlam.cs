@@ -16,7 +16,7 @@ public class OgreSlam : Ability
         double r = random.NextDouble();
         if (r < chance)
         {
-            Debug.Log("Furry random " + r);
+            //Debug.Log("Furry random " + r);
             caster.DealPhysicalDamage(HpDamage);
             TurnMaster.GetInstance().RemoveEnemyStamina(staminaDamage);
         }

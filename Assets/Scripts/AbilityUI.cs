@@ -44,9 +44,9 @@ public class AbilityUI : MonoBehaviour
 
     void UpdateAbilityState(int change)
     {
-        bool canAct = TurnMaster.GetInstance().GetIsPlayerTurn() && !gladiator.GetHasUsedAbilityThisTurn();
+        //bool canAct = TurnMaster.GetInstance().GetIsPlayerTurn() && !gladiator.GetHasUsedAbilityThisTurn();
 
-        button.interactable = canAct && gladiator.HasEnoughToUseAbility(ability);
+        button.interactable = !gladiator.GetHasUsedAbilityThisTurn() && gladiator.HasEnoughToUseAbility(ability);
     }
 
     void TurnEnd()

@@ -17,8 +17,9 @@ public class Gem : MonoBehaviour
     [SerializeField] GemType gemType;
     [SerializeField] RectTransform rectTransform;
 
-    int gridX;
-    int gridY;
+    [SerializeField]int gridX;
+    [SerializeField]int gridY;
+    public int heightOffset;
     Board board;
     readonly float speed = 8f;
     bool isSelected;
@@ -86,13 +87,14 @@ public class Gem : MonoBehaviour
 
     public void OnPointerDown()
     {
+        // Debug.Log("My cord " + gridX + " " + gridY);
         // Gem thatBitch = board.GetGem(gridX, gridY);
         // if (thatBitch != this)
         // {
         //     Debug.Log("Board-chan think I'm " + thatBitch.GetX() + thatBitch.GetY());
         // }
 
-        //board.MakeBoardPlayable();
+        // board.MakeBoardPlayable();
 
         if (isSelected)
         {
@@ -105,7 +107,8 @@ public class Gem : MonoBehaviour
             {
                 if (board.IsSelectedGemAdjacent(this))
                 {
-                    StartCoroutine(board.SwapGem(this));
+                    TurnMaster.GetInstance().EnqueueAction(board.SwapGem(this));
+                    TurnMaster.GetInstance().EnqueueChangeTurn(false);
                 }
                 else
                 {
@@ -127,6 +130,8 @@ public class Gem : MonoBehaviour
         
         while (elapsedTime < duration)
         {
+            if (this == null) yield break;
+
             float t = elapsedTime / duration;
             t = Mathf.SmoothStep(0f, 1f, t);            
             rectTransform.localPosition = Vector3.Lerp(startPosition, targetPosition, t); 
@@ -135,16 +140,21 @@ public class Gem : MonoBehaviour
         }
 
         rectTransform.localPosition = targetPosition;
+        //yield return new WaitForSeconds(.5f);
+        
         isJustMoved = true;
         ResetOldCord();
     }
 
-    public IEnumerator FallMovement(Vector2 targetPosition)
+    public IEnumerator FallMovement()
     {
         board.runningCoroutines++;
+        Vector2 targetPosition = board.GridToWorldPosition(gridX, gridY);
 
         while (Vector3.Distance(transform.localPosition, targetPosition) > 0.01f)
         {
+            if (this == null) yield break;
+
             transform.localPosition = Vector3.MoveTowards(
                 transform.localPosition, 
                 targetPosition, 
@@ -152,8 +162,10 @@ public class Gem : MonoBehaviour
             );
             yield return null;
         }
-        
+
         transform.localPosition = targetPosition;
+        //yield return new WaitForSeconds(.5f);
+        
         board.runningCoroutines--;
         isJustMoved = true;
         yield return null;
