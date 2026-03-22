@@ -232,7 +232,24 @@ public class Gladiator : ScriptableObject
 
     public void TakeMagicalDamage(float inDamage)
     {
-        
+        float remainingDamage = inDamage;
+        if (currentArmor > 0)
+        {
+            remainingDamage = ArmorTakesDamage(inDamage);
+        }
+
+        if (remainingDamage >= currentHP)
+        {
+            currentHP = 0;
+            HPChanged?.Invoke(-currentHP);
+            TurnMaster.GetInstance().PlayerDead(this);
+        }
+        else
+        {
+            int damage = (int)remainingDamage;
+            currentHP -= damage;
+            HPChanged?.Invoke(-damage);
+        }
     }
 
     public float ArmorTakesDamage(float inDamage)
@@ -265,7 +282,7 @@ public class Gladiator : ScriptableObject
 
     public IEnumerator Act() // Change to coroutine
     {
-        TurnMaster.GetInstance().isPlayerTurn = false;
+        //TurnMaster.GetInstance().isPlayerTurn = false;
 
         yield return new WaitForSeconds(1);
 
@@ -277,7 +294,7 @@ public class Gladiator : ScriptableObject
 
         PotentialMatch bestMove = ChooseBestMatch(board.FindPotentialMatches());
         board.SwapGem_ExternalCall(bestMove.mainGem, bestMove.swapGem, false);
-        TurnMaster.GetInstance().EnqueueChangeTurn(true);
+        TurnMaster.GetInstance().EnqueueEndTurn();
         yield return null;
     }
 

@@ -67,33 +67,9 @@ public class TurnMaster : MonoBehaviour
         matchState = MatchState.ON_GOING;
     }
 
-    public IEnumerator ProcessAction()
-    {
-        //EnableBoard(false);
-        
-        while (runningCoroutines > 0)
-        {
-            yield return null;
-        }
-
-        Debug.Log("From TurnMaster: runningCoroutines = 0");
-
-        isPlayerTurn = false;
-        player2.Act();
-
-        while (runningCoroutines > 0)
-        {
-            yield return null;
-        }
-
-        isPlayerTurn = true;
-        //EnableBoard(true);
-        EndTurn();
-    }
-
     public void EnqueueAction(IEnumerator coroutine)
     {
-        LetPlayerAct(false);
+        EnablePlayerControl(false);
 
         PendingActions.Enqueue(coroutine);
 
@@ -116,31 +92,39 @@ public class TurnMaster : MonoBehaviour
         }
 
         currentRunningCoroutine = null;
-        yield return LetPlayerAct(true);
+        yield return EnablePlayerControl(true);
     }
 
-    public IEnumerator LetPlayerAct(bool b)
+    public IEnumerator SetIsPlayerTurn(bool b)
     {
-        BoardBlocker.SetActive(!b);
         isPlayerTurn = b;
         yield return null;
     }
 
-    public void EnqueueChangeTurn(bool isPlayerTurnNext)
+    public IEnumerator EnablePlayerControl(bool b)
     {
-        if (isPlayerTurnNext)
+        BoardBlocker.SetActive(!b);
+        yield return null;
+    }
+
+    public void EnqueueEndTurn()
+    {
+        EnqueueAction(EndTurn());
+    }
+
+    IEnumerator EndTurn()
+    {
+        TurnEnds?.Invoke();
+        isPlayerTurn = !isPlayerTurn;
+
+        if (isPlayerTurn)
         {
-            EnqueueAction(LetPlayerAct(true));
+            yield return EnablePlayerControl(true);
         }
         else
         {
-            EnqueueAction(player2.Act());
+            yield return player2.Act();
         }
-    }
-
-    void EndTurn()
-    {
-        TurnEnds?.Invoke();
     }
 
     public bool GetIsPlayerTurn()

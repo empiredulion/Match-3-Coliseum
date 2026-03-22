@@ -19,7 +19,6 @@ public class Board : MonoBehaviour
     System.Random random = new();
     List<GemType> gemTypes = new();
 
-    //List<(int row, int column, int gemType, int heightOffset)> PendingGems = new();
     List<(Gem gem, int heightOffset)> PendingGems = new();
 
     public TestBoard testBoard;
@@ -45,13 +44,6 @@ public class Board : MonoBehaviour
 
         MakeBoardPlayable();
         PlacePendingGems();
-
-        // for (int x = 0; x < xDim; x++)
-        // {
-        //     for (int y = 0; y < yDim; y++)
-        //     // Gem falls coroutine
-        //     StartCoroutine(grid[x, y].FallMovement(GridToWorldPosition(x, y)));
-        // }
     }
 
     // Update is called once per frame
@@ -70,16 +62,6 @@ public class Board : MonoBehaviour
         return grid[x, y];
     }
 
-    // void MakeNewGem(int x, int y) {
-    //     Vector3 tile_pos = GridToWorldPosition(x, y);
-    //     GameObject newTile = Instantiate(TilePrefabs[UnityEngine.Random.Range(0, TilePrefabs.Count)], tile_pos, Quaternion.identity);
-    //     newTile.transform.SetParent(boardTransform, false);
-                    
-    //     grid[x, y] = newTile.GetComponent<Gem>();
-    //     grid[x, y].GetComponent<Gem>().AssignPosition(x, y);
-    //     grid[x, y].GetComponent<Gem>().AssignBoard(this);
-    // }
-
     Gem MakeNewGem(int x, int y, int heightOffset, int inType = -1) {
         Vector3 tile_pos = GridToWorldPosition(x, y + heightOffset);
         GameObject gemMold = TilePrefabs[inType > 0 ? inType : UnityEngine.Random.Range(0, TilePrefabs.Count)];
@@ -91,7 +73,6 @@ public class Board : MonoBehaviour
         grid[x, y].AssignBoard(this);
         grid[x, y].heightOffset = heightOffset;
 
-        //StartCoroutine(grid[x, y].SwapMovement(GridToWorldPosition(x, y)));
         return grid[x, y];
     }
 
@@ -99,7 +80,6 @@ public class Board : MonoBehaviour
     {
         foreach (var gem in PendingGems)
         {
-            //MakeNewGem(gem.row, gem.column, gem.heightOffset, gem.gemType);
             gem.gem.gameObject.transform.localPosition = GridToWorldPosition(gem.gem.GetX(), gem.gem.GetY() + gem.heightOffset);
             StartCoroutine(gem.gem.FallMovement());
         }
@@ -152,13 +132,7 @@ public class Board : MonoBehaviour
 
         UnSelectCurrentGem();
 
-        //StartCoroutine(ClearAllValidMatches());
         yield return ClearAllValidMatches();
-
-        if (isPlayerTurn)
-        {
-            //StartCoroutine(TurnMaster.GetInstance().ProcessAction());
-        }
 
         TurnMaster.GetInstance().runningCoroutines--;
     }
@@ -181,7 +155,6 @@ public class Board : MonoBehaviour
 
         grid[x1, y1].gameObject.transform.localPosition = GridToWorldPosition(x1, y1);
         grid[x2, y2].gameObject.transform.localPosition = GridToWorldPosition(x2, y2);
-        Debug.Log("SwapGemNoAnim");
         //Debug.Log("Furry Swap Gems at: " + x1 + " " + y1 + " and " + x2 + " " + y2);
     }
 
@@ -450,11 +423,8 @@ public class Board : MonoBehaviour
             yield return null;
         }
         
-        //Debug.Log("From Board 1: TurnMaster runningCoroutines = " + TurnMaster.GetInstance().runningCoroutines);
-
         yield return ClearAllValidMatches();
 
-        //Debug.Log("From Board 2: TurnMaster runningCoroutines = " + TurnMaster.GetInstance().runningCoroutines);
         TurnMaster.GetInstance().runningCoroutines--;
     }
 
@@ -747,14 +717,6 @@ public class Board : MonoBehaviour
             }
         }
 
-        // PotentialMatch bestOfBests = null;
-        // if (bestMatches.Count > 0)
-        // {
-        //     bestOfBests = bestMatches.OrderByDescending(x => x.gemCount)
-        //                             .ThenBy(x => x.gemType)
-        //                             .First();
-        // }
-
         return bestMatches;
     }
 
@@ -891,10 +853,10 @@ public class Board : MonoBehaviour
 
         int temp = grid[gX, gY].heightOffset;
         Destroy(grid[gX, gY].gameObject);
+        Debug.Log("ChangeGemTypeRandom Destroy");
         grid[gX, gY] = null;
 
-        MakeNewGem(gX, gY, temp, UnityEngine.Random.Range(0, randomGemTypes.Count));
-        //PendingGems.Add((gX, gY, ))
+        PendingGems.Add((MakeNewGem(gX, gY, temp, UnityEngine.Random.Range(0, randomGemTypes.Count)), temp));
     }
 
     public void ResetBoard()
@@ -902,6 +864,7 @@ public class Board : MonoBehaviour
         foreach (Gem gem in grid)
         {
             Destroy(gem.gameObject);
+            Debug.Log("ResetBoard Destroy");
         }
 
         System.Array.Clear(grid, 0, grid.Length);

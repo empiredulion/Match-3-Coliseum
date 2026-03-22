@@ -28,6 +28,7 @@ public class Gem : MonoBehaviour
     readonly float shrinkDuration = 0.3f;
     [SerializeField] AnimationCurve shrinkCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
 
+    bool  runningCoroutines;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -108,7 +109,7 @@ public class Gem : MonoBehaviour
                 if (board.IsSelectedGemAdjacent(this))
                 {
                     TurnMaster.GetInstance().EnqueueAction(board.SwapGem(this));
-                    TurnMaster.GetInstance().EnqueueChangeTurn(false);
+                    TurnMaster.GetInstance().EnqueueEndTurn();
                 }
                 else
                 {
@@ -140,7 +141,6 @@ public class Gem : MonoBehaviour
         }
 
         rectTransform.localPosition = targetPosition;
-        //yield return new WaitForSeconds(.5f);
         
         isJustMoved = true;
         ResetOldCord();
@@ -149,10 +149,14 @@ public class Gem : MonoBehaviour
     public IEnumerator FallMovement()
     {
         board.runningCoroutines++;
+        runningCoroutines = true;
         Vector2 targetPosition = board.GridToWorldPosition(gridX, gridY);
 
         while (Vector3.Distance(transform.localPosition, targetPosition) > 0.01f)
         {
+            yield return null; // Wait for next frame
+
+            // Check if we were destroyed while waiting for the next frame
             if (this == null) yield break;
 
             transform.localPosition = Vector3.MoveTowards(
@@ -160,15 +164,15 @@ public class Gem : MonoBehaviour
                 targetPosition, 
                 speed * Time.deltaTime * 100
             );
-            yield return null;
-        }
+        }     
 
         transform.localPosition = targetPosition;
-        //yield return new WaitForSeconds(.5f);
-        
         board.runningCoroutines--;
+        runningCoroutines = false;
         isJustMoved = true;
+
         yield return null;
+
         ResetOldCord();
     }
 
@@ -197,7 +201,6 @@ public class Gem : MonoBehaviour
         
         // Destroy the game object
         Destroy(gameObject);
-
         board.runningCoroutines--;
     }
 
