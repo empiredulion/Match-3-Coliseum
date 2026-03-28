@@ -12,7 +12,7 @@ public enum MatchState
 
 public class TurnMaster : MonoBehaviour
 {
-    public bool isPlayerTurn = false;
+    bool isPlayerTurn = false;
     public int runningCoroutines = 0;
 
     [SerializeField] Gladiator player1;
@@ -22,6 +22,9 @@ public class TurnMaster : MonoBehaviour
     [SerializeField] GameObject BoardBlocker;
     [SerializeField] Board board;
 
+    [SerializeField] GameObject EndScreen;
+    [SerializeField] GameObject WinScreen;
+    [SerializeField] GameObject LostScreen;
     [HideInInspector] public UnityEvent TurnEnds;
 
     Queue<IEnumerator> PendingActions = new();
@@ -67,9 +70,19 @@ public class TurnMaster : MonoBehaviour
         matchState = MatchState.ON_GOING;
     }
 
+    public GameObject GetPlayer1()
+    {
+        return gladiatorUI1.gameObject;
+    }
+
+    public GameObject GetPlayer2()
+    {
+        return gladiatorUI2.gameObject;
+    }
+
     public void EnqueueAction(IEnumerator coroutine)
     {
-        EnablePlayerControl(false);
+        PendingActions.Enqueue(EnablePlayerControl(false));
 
         PendingActions.Enqueue(coroutine);
 
@@ -135,6 +148,18 @@ public class TurnMaster : MonoBehaviour
     public void PlayerDead(Gladiator inPlayer)
     {
         matchState = inPlayer == player1 ? MatchState.PLAYER_2_WON : MatchState.PLAYER_1_WON;
+        EndScreen.SetActive(true);
+
+        if (matchState == MatchState.PLAYER_1_WON)
+        {
+            WinScreen.SetActive(true);
+            LostScreen.SetActive(false);
+        }
+        else
+        {
+            WinScreen.SetActive(false);
+            LostScreen.SetActive(true);
+        }
     }
 
     public bool IsMatchFinished()

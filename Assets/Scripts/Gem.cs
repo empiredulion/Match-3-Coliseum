@@ -19,8 +19,12 @@ public class Gem : MonoBehaviour
 
     [SerializeField]int gridX;
     [SerializeField]int gridY;
+
+    [SerializeField] FlyingIcon flyingIcon;
+
     public int heightOffset;
     Board board;
+    Transform Canvas;
     readonly float speed = 8f;
     bool isSelected;
     bool isJustMoved;
@@ -47,9 +51,13 @@ public class Gem : MonoBehaviour
         gridY = inY;
     }
 
-    public void AssignBoard(Board inBoard)
+    public void AssignBoard(Board inBoard, Transform inCanvas, Transform inPlayer1, Transform inPlayer2)
     {
         board = inBoard;
+        flyingIcon.board = inBoard;
+        Canvas = inCanvas;
+        flyingIcon.player1 = inPlayer1;
+        flyingIcon.player2 = inPlayer2;
     }
 
     public int GetX()
@@ -184,6 +192,9 @@ public class Gem : MonoBehaviour
         Vector3 originalScale = rectTransform.localScale;
         float elapsedTime = 0f;
         
+        flyingIcon.gameObject.transform.SetParent(Canvas, true);
+        flyingIcon.StartFlying(gemType);
+
         while (elapsedTime < shrinkDuration)
         {
             elapsedTime += Time.deltaTime;
@@ -200,8 +211,8 @@ public class Gem : MonoBehaviour
         rectTransform.localScale = Vector3.zero;
         
         // Destroy the game object
-        Destroy(gameObject);
         board.runningCoroutines--;
+        Destroy(gameObject);
     }
 
     public void SetIsJustMovedFalse()

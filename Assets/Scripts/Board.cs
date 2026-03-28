@@ -8,7 +8,9 @@ public class Board : MonoBehaviour
     private static WaitForSeconds _waitForSeconds2 = new(2);
     [SerializeField] int xDim;
     [SerializeField] int yDim;
-    [SerializeField] Transform boardTransform;
+    [SerializeField] Transform Canvas;
+    [SerializeField] Transform player1;
+    [SerializeField] Transform player2;
     [SerializeField] List<GameObject> TilePrefabs;
     [SerializeField] private Vector2 gridOffset; // padding for the whole board
     float gemSize = 100f; // actual size is 90, 10 is for spacing
@@ -66,11 +68,11 @@ public class Board : MonoBehaviour
         Vector3 tile_pos = GridToWorldPosition(x, y + heightOffset);
         GameObject gemMold = TilePrefabs[inType > 0 ? inType : UnityEngine.Random.Range(0, TilePrefabs.Count)];
         GameObject newTile = Instantiate(gemMold, tile_pos, Quaternion.identity);
-        newTile.transform.SetParent(boardTransform, false);
+        newTile.transform.SetParent(transform, false);
                     
         grid[x, y] = newTile.GetComponent<Gem>();
         grid[x, y].AssignPosition(x, y);
-        grid[x, y].AssignBoard(this);
+        grid[x, y].AssignBoard(this, Canvas, player1, player2);
         grid[x, y].heightOffset = heightOffset;
 
         return grid[x, y];
@@ -853,7 +855,6 @@ public class Board : MonoBehaviour
 
         int temp = grid[gX, gY].heightOffset;
         Destroy(grid[gX, gY].gameObject);
-        Debug.Log("ChangeGemTypeRandom Destroy");
         grid[gX, gY] = null;
 
         PendingGems.Add((MakeNewGem(gX, gY, temp, UnityEngine.Random.Range(0, randomGemTypes.Count)), temp));
@@ -864,7 +865,6 @@ public class Board : MonoBehaviour
         foreach (Gem gem in grid)
         {
             Destroy(gem.gameObject);
-            Debug.Log("ResetBoard Destroy");
         }
 
         System.Array.Clear(grid, 0, grid.Length);
