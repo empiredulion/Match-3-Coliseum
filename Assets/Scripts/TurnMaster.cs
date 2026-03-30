@@ -201,4 +201,14 @@ public class TurnMaster : MonoBehaviour
     {
         (isPlayerTurn ? player2 : player1).StaminaChange(-amount);
     }
+
+    public void StartAbsorbingEffect()
+    {
+        StartCoroutine(AbsorbingEffectCoroutine());
+    }
+
+    IEnumerator AbsorbingEffectCoroutine()
+    {
+        yield return null;
+    }
 }
