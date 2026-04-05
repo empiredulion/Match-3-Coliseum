@@ -3,13 +3,13 @@ using System.Collections;
 
 public enum GemType
 {
-    NONE = 0,
-    ATTACK = 1,
-    MAGIC = 2,
+    NONE    = 0,
+    ATTACK  = 1,
+    MAGIC   = 2,
     STAMINA = 3,
-    MANA = 4,
-    SHIELD = 5,
-    HEAL = 6
+    MANA    = 4,
+    SHIELD  = 5,
+    HEAL    = 6
 }
 
 public class Gem : MonoBehaviour
@@ -165,7 +165,10 @@ public class Gem : MonoBehaviour
             yield return null; // Wait for next frame
 
             // Check if we were destroyed while waiting for the next frame
-            if (this == null) yield break;
+            if (this == null) {
+                board.runningCoroutines--;
+                yield break;
+            }
 
             transform.localPosition = Vector3.MoveTowards(
                 transform.localPosition, 
@@ -184,16 +187,15 @@ public class Gem : MonoBehaviour
         ResetOldCord();
     }
 
-    public  IEnumerator ShrinkAndDestroy()
+    public  IEnumerator ShrinkAndDestroy(bool isLeadGem, int gemCount)
     {
         board.runningCoroutines++;
-
         RectTransform rectTransform = GetComponent<RectTransform>();
         Vector3 originalScale = rectTransform.localScale;
         float elapsedTime = 0f;
         
         flyingIcon.gameObject.transform.SetParent(Canvas, true);
-        flyingIcon.StartFlying(gemType);
+        flyingIcon.StartFlying(gemType, isLeadGem, gemCount);
 
         while (elapsedTime < shrinkDuration)
         {

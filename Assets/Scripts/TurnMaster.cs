@@ -25,6 +25,10 @@ public class TurnMaster : MonoBehaviour
     [SerializeField] GameObject EndScreen;
     [SerializeField] GameObject WinScreen;
     [SerializeField] GameObject LostScreen;
+
+    [SerializeField] ModelUI model1;
+    [SerializeField] ModelUI model2;
+
     [HideInInspector] public UnityEvent TurnEnds;
 
     Queue<IEnumerator> PendingActions = new();
@@ -202,13 +206,8 @@ public class TurnMaster : MonoBehaviour
         (isPlayerTurn ? player2 : player1).StaminaChange(-amount);
     }
 
-    public void StartAbsorbingEffect()
+    public void StartAbsorbingEffect(bool onMe, int effectIndex)
     {
-        StartCoroutine(AbsorbingEffectCoroutine());
-    }
-
-    IEnumerator AbsorbingEffectCoroutine()
-    {
-        yield return null;
+        (onMe == isPlayerTurn ? model1 : model2).StartGemsAbsorbingEffect(effectIndex);
     }
 }

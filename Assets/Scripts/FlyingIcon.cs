@@ -12,7 +12,12 @@ public class FlyingIcon : MonoBehaviour
     readonly float rotationDuration = .5f;
     readonly float shrinkTo = 0.2f;
     readonly float rotationSpeed = 300f;
+
     bool isMagic = false;
+    bool isLeadGem = false;
+    int gemCount = 0;
+    GemType gemType;
+    
     [SerializeField] AnimationCurve expandCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
 
     void Update()
@@ -24,16 +29,18 @@ public class FlyingIcon : MonoBehaviour
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    public void StartFlying(GemType gemType)
+    public void StartFlying(GemType inGemType, bool isLeadGem, int gemCount)
     {
+        gemType = inGemType;
         StartCoroutine(FlyingCoroutine(gemType));
-        isMagic = true;
+        isMagic = gemType == GemType.MAGIC;
+        this.isLeadGem = isLeadGem;
+        if (isLeadGem) this.gemCount = gemCount;
     }
 
     IEnumerator FlyingCoroutine(GemType gemType)
     {
         board.runningCoroutines++;
-
         // Expanding
         RectTransform rectTransform = GetComponent<RectTransform>();
         float elapsedTime = 0f;
@@ -72,6 +79,9 @@ public class FlyingIcon : MonoBehaviour
         }
 
         board.runningCoroutines--;
+        if (isLeadGem)
+            TurnMaster.GetInstance().PopGems(gemType, gemCount);
+            
         Destroy(gameObject);
     }
 
@@ -122,6 +132,7 @@ public class FlyingIcon : MonoBehaviour
         }
 
         rectTransform.position = endPos;
+        if (isLeadGem) TurnMaster.GetInstance().StartAbsorbingEffect(true, (int)gemType);
     }
 
     // Math Helper: Cubic Bezier Point
@@ -180,6 +191,7 @@ public class FlyingIcon : MonoBehaviour
         }
 
         rectTransform.position = endPos;
+        if (isLeadGem) TurnMaster.GetInstance().StartAbsorbingEffect(false, (int)gemType);
     }
 
     IEnumerator MoveStraightLine_Magic()
@@ -197,5 +209,6 @@ public class FlyingIcon : MonoBehaviour
         }
 
         rectTransform.position = endPos;
+        if (isLeadGem) TurnMaster.GetInstance().StartAbsorbingEffect(false, (int)gemType);
     }
 }

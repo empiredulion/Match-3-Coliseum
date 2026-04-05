@@ -11,12 +11,11 @@ public class OgreSlam : Ability
     public override IEnumerator TriggerAbility(Gladiator caster)
     {
         ConsumeEnergy(caster);
-
+        TurnMaster.GetInstance().StartAbsorbingEffect(false, (int)EffectIndex.EARTH_SHATTER);
         System.Random random = new();
         double r = random.NextDouble();
         if (r < chance)
         {
-            //Debug.Log("Furry random " + r);
             caster.DealPhysicalDamage(HpDamage);
             TurnMaster.GetInstance().RemoveEnemyStamina(staminaDamage);
         }

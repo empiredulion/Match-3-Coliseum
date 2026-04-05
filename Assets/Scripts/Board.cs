@@ -193,18 +193,20 @@ public class Board : MonoBehaviour
 
     void PopGems(ClearableMatch inMatch)
     {
-        TurnMaster.GetInstance().PopGems(inMatch.gems[0].GetGemType(), inMatch.gemCount);
+        //TurnMaster.GetInstance().PopGems(inMatch.gems[0].GetGemType(), inMatch.gemCount);
+        bool isLeadGem = true;
         foreach (Gem gem in inMatch.gems)
         {
-            ClearGem(gem.GetX(), gem.GetY());
+            ClearGem(gem.GetX(), gem.GetY(), isLeadGem, inMatch.gemCount);
+            isLeadGem = false;
         }
     }
 
-    public void ClearGem(int x, int y)
+    public void ClearGem(int x, int y, bool isLeadGem, int gemCount)
     {
         if (grid[x, y] != null)
         {
-            StartCoroutine(grid[x, y].ShrinkAndDestroy());
+            StartCoroutine(grid[x, y].ShrinkAndDestroy(isLeadGem, gemCount));
             grid[x, y] = null;
         }
     }
