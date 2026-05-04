@@ -11,6 +11,7 @@ public enum EffectIndex
     SHIELD          = 5,
     HEAL            = 6,
     EARTH_SHATTER   = 7,
+    CURE_WOUND      = 8,
 }
 
 public class ModelUI : MonoBehaviour
@@ -37,12 +38,8 @@ public class ModelUI : MonoBehaviour
             case 4:
             case 5:
             case 6:
-            {
-                GameObject newEffect = Instantiate(absorbingEffectPrefab, gameObject.transform);
-                newEffect.GetComponent<AbsorbingGemsEffect>().StartAbsorbingGemsEffect(index);
-                break;
-            }
             case 7:
+            case 8:
             {
                 GameObject newEffect = Instantiate(absorbingEffectPrefab, gameObject.transform);
                 newEffect.GetComponent<AbsorbingGemsEffect>().StartAbsorbingGemsEffect(index);
@@ -62,6 +59,16 @@ public class ModelUI : MonoBehaviour
     public void ShakeModel_End()
     {
         animator.SetBool("useShake", false);
+    }
+
+    public void IsHit(bool b = false)
+    {
+        animator.SetBool("isHit", true);
+    }
+
+    public void IsHit_End()
+    {
+        animator.SetBool("isHit", false);
     }
 }
 

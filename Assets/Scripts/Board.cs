@@ -5,7 +5,7 @@ using System.Linq;
 
 public class Board : MonoBehaviour
 {
-    private static WaitForSeconds _waitForSeconds2 = new(2);
+    static WaitForSeconds _waitForSeconds2 = new(2);
     [SerializeField] int xDim;
     [SerializeField] int yDim;
     [SerializeField] Transform Canvas;

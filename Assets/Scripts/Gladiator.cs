@@ -38,10 +38,10 @@ public class Gladiator : ScriptableObject
     public List<Ability> abilities = new();
     [SerializeField] FightingStyle fightingStyle;
 
-    [HideInInspector] public UnityEvent<int> HPChanged;
-    [HideInInspector] public UnityEvent<int> StaminaChanged;
-    [HideInInspector] public UnityEvent<int> ManaChanged;
-    [HideInInspector] public UnityEvent<int> ArmorChanged;
+    [HideInInspector] public UnityEvent<Gladiator, int> HPChanged;
+    [HideInInspector] public UnityEvent<Gladiator, int> StaminaChanged;
+    [HideInInspector] public UnityEvent<Gladiator, int> ManaChanged;
+    [HideInInspector] public UnityEvent<Gladiator, int> ArmorChanged;
 
     bool hasUsedAbilityThisTurn = false;
     Board board;
@@ -61,7 +61,7 @@ public class Gladiator : ScriptableObject
     public void StartMatch(Board inboard)
     {
         currentHP = maxHP;
-        currentStamina = 100;
+        currentStamina = 0;
         currentMana = 0;
         currentArmor = 0;
         hasUsedAbilityThisTurn = false;
@@ -73,7 +73,8 @@ public class Gladiator : ScriptableObject
     void TurnEnd()
     {
         hasUsedAbilityThisTurn = false;
-        GainArmor(-currentArmor);
+        if (!TurnMaster.GetInstance().GetIsMyTurn(this))
+            GainArmor(-currentArmor);
     }
 
     public int GetMaxHP()
@@ -104,7 +105,7 @@ public class Gladiator : ScriptableObject
     public void SetHasUsedAbilityThisTurn(bool b)
     {
         hasUsedAbilityThisTurn = b;
-        StaminaChanged?.Invoke(0); // Hopefully nothing breaks
+        StaminaChanged?.Invoke(this, 0); // Hopefully nothing breaks
     }
 
     public void PopGems(GemType type, int num)
@@ -184,28 +185,28 @@ public class Gladiator : ScriptableObject
     public void GainArmor(int inArmor)
     {
         currentArmor += inArmor;
-        ArmorChanged?.Invoke(inArmor);
+        ArmorChanged?.Invoke(this, inArmor);
     }
 
     public void GainHeal(int inHeal)
     {
         int newHP = currentHP + inHeal;
         currentHP = newHP > maxHP ? maxHP : newHP;
-        HPChanged?.Invoke(inHeal);
+        HPChanged?.Invoke(this, inHeal);
     }
 
     public void StaminaChange(int amount)
     {
         int newStam = currentStamina + amount;
         currentStamina = newStam < 0 ? 0 : (newStam > maxStamina ? maxStamina : newStam);
-        StaminaChanged?.Invoke(amount);
+        StaminaChanged?.Invoke(this, amount);
     }
 
     public void ManaChange(int amount)
     {
         int newMana = currentMana + amount;
         currentMana = newMana < 0 ? 0 : (newMana > maxMana ? maxMana : newMana);
-        ManaChanged?.Invoke(amount);
+        ManaChanged?.Invoke(this, amount);
     }
 
     public void TakePhysicalDamage(float inDamage)
@@ -219,14 +220,14 @@ public class Gladiator : ScriptableObject
         if (remainingDamage >= currentHP)
         {
             currentHP = 0;
-            HPChanged?.Invoke(-currentHP);
+            HPChanged?.Invoke(this, -currentHP);
             TurnMaster.GetInstance().PlayerDead(this);
         }
         else
         {
             int damage = (int)remainingDamage;
             currentHP -= damage;
-            HPChanged?.Invoke(-damage);
+            HPChanged?.Invoke(this, -damage);
         }
     }
 
@@ -241,14 +242,14 @@ public class Gladiator : ScriptableObject
         if (remainingDamage >= currentHP)
         {
             currentHP = 0;
-            HPChanged?.Invoke(-currentHP);
+            HPChanged?.Invoke(this, -currentHP);
             TurnMaster.GetInstance().PlayerDead(this);
         }
         else
         {
             int damage = (int)remainingDamage;
             currentHP -= damage;
-            HPChanged?.Invoke(-damage);
+            HPChanged?.Invoke(this, -damage);
         }
     }
 
@@ -258,14 +259,14 @@ public class Gladiator : ScriptableObject
         {
             float remainingDamage = inDamage - currentArmor;
             currentArmor = 0;
-            ArmorChanged?.Invoke(-currentArmor);
+            ArmorChanged?.Invoke(this, -currentArmor);
             return remainingDamage;
         }
         else
         {
             int damage = (int)inDamage;
             currentArmor -= damage;
-            ArmorChanged?.Invoke(-damage);
+            ArmorChanged?.Invoke(this, -damage);
             return 0;
         }
     }
@@ -318,6 +319,7 @@ public class Gladiator : ScriptableObject
     {
         if (!GetHasUsedAbilityThisTurn())
         {
+            TurnMaster.GetInstance().EnqueueSkillNotifier(this, a.GetName());
             TurnMaster.GetInstance().EnqueueAction(a.TriggerAbility(this));
             SetHasUsedAbilityThisTurn(true);
         }

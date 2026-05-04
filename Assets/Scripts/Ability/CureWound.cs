@@ -9,6 +9,7 @@ public class CureWound : Ability
     public override IEnumerator TriggerAbility(Gladiator caster)
     {
         ConsumeEnergy(caster);
+        TurnMaster.GetInstance().StartAbsorbingEffect(true, (int)EffectIndex.CURE_WOUND);
 
         caster.GainHeal(heal);
         

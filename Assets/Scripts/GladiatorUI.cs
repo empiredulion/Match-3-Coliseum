@@ -68,25 +68,25 @@ public class GladiatorUI : MonoBehaviour
         gladiator.ArmorChanged.RemoveListener(UpdateArmor);
     }
 
-    public void UpdateHP(int change)
+    public void UpdateHP(Gladiator g, int change)
     {
         hpText.text = $"{gladiator.currentHP}/{gladiator.GetMaxHP()}";
         hpBar.fillAmount = (float)gladiator.currentHP/gladiator.GetMaxHP();
     }
 
-    public void UpdateStamina(int change)
+    public void UpdateStamina(Gladiator g,int change)
     {
         staminaText.text = $"{gladiator.currentStamina}/{gladiator.GetMaxStamina()}";
         staminaBar.fillAmount = (float)gladiator.currentStamina/gladiator.GetMaxStamina();
     }
 
-    public void UpdateMana(int change)
+    public void UpdateMana(Gladiator g,int change)
     {
         manaText.text = $"{gladiator.currentMana}/{gladiator.GetMaxMana()}";
         manaBar.fillAmount = (float)gladiator.currentMana/gladiator.GetMaxMana();
     }
 
-    public void UpdateArmor(int change)
+    public void UpdateArmor(Gladiator g,int change)
     {
         if (gladiator.GetArmor() > 0)
         {

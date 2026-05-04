@@ -16,8 +16,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: a2a1a50ad8f54534790b98ac49e59dd6, type: 3}
   requiredResource: 0
   cost: 50
-  description: Deal {0} damage to HP and remove {1} stamina. This skill has only
-    {3}% chance to hit.
+  description: Deal {0} damage to HP and remove {1} stamina. This skill has {2}%
+    chance to hit.
   HpDamage: 50
   staminaDamage: 25
   chance: 0.75

@@ -12,18 +12,6 @@ public class AbilityUI : MonoBehaviour
     Gladiator gladiator;
     Ability ability;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public void AssignAbility(Ability inAbility, Gladiator inGladiator, bool isEnemy)
     {
         ability = inAbility;
@@ -38,14 +26,12 @@ public class AbilityUI : MonoBehaviour
             gladiator.StaminaChanged.AddListener(UpdateAbilityState);
             TurnMaster.GetInstance().TurnEnds.AddListener(TurnEnd);
 
-            UpdateAbilityState(0);
+            UpdateAbilityState(null, 0);
         }
     }
 
-    void UpdateAbilityState(int change)
+    void UpdateAbilityState(Gladiator g, int change)
     {
-        //bool canAct = TurnMaster.GetInstance().GetIsPlayerTurn() && !gladiator.GetHasUsedAbilityThisTurn();
-
         button.interactable = !gladiator.GetHasUsedAbilityThisTurn() && gladiator.HasEnoughToUseAbility(ability);
     }
 
@@ -57,5 +43,15 @@ public class AbilityUI : MonoBehaviour
     public void OnPointerDown()
     {
         gladiator.UseAbility(ability);
+    }
+
+    public void OnPointerEnter()
+    {
+        TurnMaster.GetInstance().GetSkillDetails().Show(ability);
+    }
+
+    public void OnPointerExit()
+    {
+        TurnMaster.GetInstance().GetSkillDetails().Close();
     }
 }

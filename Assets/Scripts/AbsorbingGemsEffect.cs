@@ -9,6 +9,7 @@ public class AbsorbingGemsEffect : MonoBehaviour
     readonly float phase2Duration = 1.0f;
     [SerializeField] Image image;
     [SerializeField] List<Sprite> sprites;
+    
     public IEnumerator AbsorbingGemsEffect_Coroutine()
     {
         RectTransform rectTransform = GetComponent<RectTransform>();

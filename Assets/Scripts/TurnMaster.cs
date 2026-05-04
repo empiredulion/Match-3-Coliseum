@@ -25,9 +25,13 @@ public class TurnMaster : MonoBehaviour
     [SerializeField] GameObject EndScreen;
     [SerializeField] GameObject WinScreen;
     [SerializeField] GameObject LostScreen;
+    [SerializeField] GameObject damageNumberPrefab;
+    [SerializeField] GameObject canvas;
 
     [SerializeField] ModelUI model1;
     [SerializeField] ModelUI model2;
+    [SerializeField] Notifier notifier;
+    [SerializeField] SkillDetails skillDetails;
 
     [HideInInspector] public UnityEvent TurnEnds;
 
@@ -67,6 +71,15 @@ public class TurnMaster : MonoBehaviour
 
         player1.StartMatch(board);
         player2.StartMatch(board);
+
+        player1.HPChanged.AddListener(SpawnHpText);
+        player2.HPChanged.AddListener(SpawnHpText);
+        player1.ArmorChanged.AddListener(SpawnArmorText);
+        player2.ArmorChanged.AddListener(SpawnArmorText);
+        player1.StaminaChanged.AddListener(SpawnStaminaText);
+        player2.StaminaChanged.AddListener(SpawnStaminaText);
+        player1.ManaChanged.AddListener(SpawnManaText);
+        player2.ManaChanged.AddListener(SpawnManaText);
 
         gladiatorUI1.AssignGladiator(player1, true);
         gladiatorUI2.AssignGladiator(player2, false);
@@ -134,9 +147,12 @@ public class TurnMaster : MonoBehaviour
         TurnEnds?.Invoke();
         isPlayerTurn = !isPlayerTurn;
 
+        yield return notifier.Slide_Coroutine(isPlayerTurn);
+
         if (isPlayerTurn)
         {
-            yield return EnablePlayerControl(true);
+            
+            BoardBlocker.SetActive(!isPlayerTurn);
         }
         else
         {
@@ -147,6 +163,11 @@ public class TurnMaster : MonoBehaviour
     public bool GetIsPlayerTurn()
     {
         return isPlayerTurn;
+    }
+
+    public bool GetIsMyTurn(Gladiator inGladiator)
+    {
+        return isPlayerTurn == (inGladiator == player1);
     }
 
     public void PlayerDead(Gladiator inPlayer)
@@ -194,11 +215,13 @@ public class TurnMaster : MonoBehaviour
     public void DealPhysicalDamage(float inDamage)
     {
         (isPlayerTurn ? player2 : player1).TakePhysicalDamage(inDamage);
+        (isPlayerTurn ? model2 : model1).IsHit();
     }
 
     public void DealMagicalDamage(float inDamage)
     {
         (isPlayerTurn ? player2 : player1).TakeMagicalDamage(inDamage);
+        (isPlayerTurn ? model2 : model1).IsHit();
     }
 
     public void RemoveEnemyStamina(int amount)
@@ -209,5 +232,78 @@ public class TurnMaster : MonoBehaviour
     public void StartAbsorbingEffect(bool onMe, int effectIndex)
     {
         (onMe == isPlayerTurn ? model1 : model2).StartGemsAbsorbingEffect(effectIndex);
+    }
+
+    public void EnqueueSkillNotifier(Gladiator inG, string inSkillName)
+    {
+        bool fromLeft = inG == player1;
+        EnqueueAction(notifier.Slide_Coroutine(fromLeft, inSkillName));
+    }
+
+    public SkillDetails GetSkillDetails()
+    {
+        return skillDetails;
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Flying Numbers
+    void SpawnHpText(Gladiator g, int change)
+    {
+        if (change == 0) return;
+
+        GameObject newFlyingNumber = Instantiate(damageNumberPrefab, canvas.transform);
+        newFlyingNumber.GetComponent<RectTransform>().position = (g == player1 ? model1 : model2).gameObject.GetComponent<RectTransform>().position;
+
+        if (change > 0)
+        {
+            newFlyingNumber.GetComponent<DamageNumberContainer>().SetHeal(change);
+        }
+        else
+        {
+            newFlyingNumber.GetComponent<DamageNumberContainer>().SetHpLost(change);
+        }
+    }
+
+    void SpawnArmorText(Gladiator g, int change)
+    {
+        if (change == 0) return;
+
+        GameObject newFlyingNumber = Instantiate(damageNumberPrefab, canvas.transform);
+        newFlyingNumber.GetComponent<RectTransform>().position = (g == player1 ? model1 : model2).gameObject.GetComponent<RectTransform>().position;
+
+        if (change > 0)
+        {
+            newFlyingNumber.GetComponent<DamageNumberContainer>().SetArmor(change);
+        }
+        else
+        {
+            newFlyingNumber.GetComponent<DamageNumberContainer>().SetArmorLost(change);
+        }
+    }
+
+    void SpawnStaminaText(Gladiator g, int change)
+    {
+        if (change == 0) return;
+
+        GameObject newFlyingNumber = Instantiate(damageNumberPrefab, canvas.transform);
+        newFlyingNumber.GetComponent<RectTransform>().position = (g == player1 ? model1 : model2).gameObject.GetComponent<RectTransform>().position;
+
+        if (change > 0)
+        {
+            newFlyingNumber.GetComponent<DamageNumberContainer>().SetStamina(change);
+        }
+    }
+
+    void SpawnManaText(Gladiator g, int change)
+    {
+        if (change == 0) return;
+        
+        GameObject newFlyingNumber = Instantiate(damageNumberPrefab, canvas.transform);
+        newFlyingNumber.GetComponent<RectTransform>().position = (g == player1 ? model1 : model2).gameObject.GetComponent<RectTransform>().position;
+
+        if (change > 0)
+        {
+            newFlyingNumber.GetComponent<DamageNumberContainer>().SetMana(change);
+        }
     }
 }
