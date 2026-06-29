@@ -115,6 +115,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  sound: {fileID: 8300000, guid: 38f51e952caf0224fa64a6bff8e6b0fd, type: 3}
 --- !u!1 &6012194517316741201
 GameObject:
   m_ObjectHideFlags: 0

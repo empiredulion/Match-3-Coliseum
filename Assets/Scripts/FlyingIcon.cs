@@ -19,7 +19,8 @@ public class FlyingIcon : MonoBehaviour
     GemType gemType;
     
     [SerializeField] AnimationCurve expandCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
-
+    [SerializeField] AudioClip sound;
+    
     void Update()
     {
         if (isMagic)
@@ -132,7 +133,11 @@ public class FlyingIcon : MonoBehaviour
         }
 
         rectTransform.position = endPos;
-        if (isLeadGem) TurnMaster.GetInstance().StartAbsorbingEffect(true, (int)gemType);
+        if (isLeadGem) 
+        {
+            TurnMaster.GetInstance().StartAbsorbingEffect(true, (int)gemType);
+            TurnMaster.GetInstance().PlaySoundEffect(sound);
+        }
     }
 
     // Math Helper: Cubic Bezier Point
@@ -191,7 +196,11 @@ public class FlyingIcon : MonoBehaviour
         }
 
         rectTransform.position = endPos;
-        if (isLeadGem) TurnMaster.GetInstance().StartAbsorbingEffect(false, (int)gemType);
+        if (isLeadGem) 
+        {
+            TurnMaster.GetInstance().StartAbsorbingEffect(false, (int)gemType);
+            TurnMaster.GetInstance().PlaySoundEffect(sound);
+        }
     }
 
     IEnumerator MoveStraightLine_Magic()
@@ -209,6 +218,10 @@ public class FlyingIcon : MonoBehaviour
         }
 
         rectTransform.position = endPos;
-        if (isLeadGem) TurnMaster.GetInstance().StartAbsorbingEffect(false, (int)gemType);
+        if (isLeadGem) 
+        {
+            TurnMaster.GetInstance().StartAbsorbingEffect(false, (int)gemType);
+            TurnMaster.GetInstance().PlaySoundEffect(sound);
+        }
     }
 }

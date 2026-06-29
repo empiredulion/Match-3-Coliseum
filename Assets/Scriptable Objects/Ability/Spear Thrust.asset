@@ -17,4 +17,5 @@ MonoBehaviour:
   requiredResource: 0
   cost: 50
   description: Deal {0} damage.
+  sound: {fileID: 8300000, guid: 3b88e318240dd494cb197241c8ec4dd6, type: 3}
   HpDamage: 100

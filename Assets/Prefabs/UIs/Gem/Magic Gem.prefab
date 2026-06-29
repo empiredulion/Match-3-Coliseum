@@ -340,3 +340,4 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  sound: {fileID: 8300000, guid: a57e2fdc02d476a49ad214e604786e4d, type: 3}

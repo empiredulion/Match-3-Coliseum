@@ -11,7 +11,8 @@ public class Bulwark : Ability
         ConsumeEnergy(caster);
 
         caster.GainArmor(armorAmount);
-        
+        TurnMaster.GetInstance().PlaySoundEffect(sound);
+
         yield return null;
     }
 

@@ -33,6 +33,8 @@ public class TurnMaster : MonoBehaviour
     [SerializeField] Notifier notifier;
     [SerializeField] SkillDetails skillDetails;
 
+    [SerializeField] AudioSource SE_Source;
+
     [HideInInspector] public UnityEvent TurnEnds;
 
     Queue<IEnumerator> PendingActions = new();
@@ -95,6 +97,11 @@ public class TurnMaster : MonoBehaviour
     public GameObject GetPlayer2()
     {
         return gladiatorUI2.gameObject;
+    }
+
+    public void PlaySoundEffect(AudioClip clip)
+    {
+        SE_Source.PlayOneShot(clip);
     }
 
     public void EnqueueAction(IEnumerator coroutine)

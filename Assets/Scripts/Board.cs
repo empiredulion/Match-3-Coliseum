@@ -13,6 +13,10 @@ public class Board : MonoBehaviour
     [SerializeField] Transform player2;
     [SerializeField] List<GameObject> TilePrefabs;
     [SerializeField] private Vector2 gridOffset; // padding for the whole board
+
+    [SerializeField] AudioClip chooseGemSound;
+    [SerializeField] AudioClip swapGemSound;
+
     float gemSize = 100f; // actual size is 90, 10 is for spacing
     Gem[,] grid;
     Gem selectedGem;
@@ -97,6 +101,7 @@ public class Board : MonoBehaviour
     public void SelectGem(Gem inGem)
     {
         selectedGem = inGem;
+        TurnMaster.GetInstance().PlaySoundEffect(chooseGemSound);
     }
 
     public void UnSelectCurrentGem()
@@ -124,6 +129,7 @@ public class Board : MonoBehaviour
         int x2 = gem2.GetX();
         int y2 = gem2.GetY();
 
+        TurnMaster.GetInstance().PlaySoundEffect(swapGemSound);
         StartCoroutine(gem1.SwapMovement(GridToWorldPosition(x2, y2)));
         yield return gem2.SwapMovement(GridToWorldPosition(x1, y1));
 

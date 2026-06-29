@@ -11,6 +11,7 @@ public class SpearThrust : Ability
         ConsumeEnergy(caster);
 
         caster.DealPhysicalDamage(HpDamage);
+        TurnMaster.GetInstance().PlaySoundEffect(sound);
         
         yield return null;
     }

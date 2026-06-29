@@ -17,4 +17,5 @@ MonoBehaviour:
   requiredResource: 0
   cost: 30
   description: Gain {0} armor.
+  sound: {fileID: 8300000, guid: 3aa3e72a5775c2f4d9e8ecd00f6da074, type: 3}
   armorAmount: 60

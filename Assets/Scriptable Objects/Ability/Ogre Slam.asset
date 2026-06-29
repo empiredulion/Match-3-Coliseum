@@ -18,6 +18,7 @@ MonoBehaviour:
   cost: 50
   description: Deal {0} damage to HP and remove {1} stamina. This skill has {2}%
     chance to hit.
+  sound: {fileID: 8300000, guid: c9c0ae5d0eb779144a9ba08381529a64, type: 3}
   HpDamage: 50
   staminaDamage: 25
   chance: 0.75

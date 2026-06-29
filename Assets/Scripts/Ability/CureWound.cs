@@ -12,6 +12,7 @@ public class CureWound : Ability
         TurnMaster.GetInstance().StartAbsorbingEffect(true, (int)EffectIndex.CURE_WOUND);
 
         caster.GainHeal(heal);
+        TurnMaster.GetInstance().PlaySoundEffect(sound);
         
         yield return null;
     }

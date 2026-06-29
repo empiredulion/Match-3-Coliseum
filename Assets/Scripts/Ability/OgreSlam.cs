@@ -20,6 +20,8 @@ public class OgreSlam : Ability
             TurnMaster.GetInstance().RemoveEnemyStamina(staminaDamage);
         }
         
+        TurnMaster.GetInstance().PlaySoundEffect(sound);
+        
         yield return null;
     }
 

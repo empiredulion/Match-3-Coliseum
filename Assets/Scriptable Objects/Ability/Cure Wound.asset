@@ -17,4 +17,5 @@ MonoBehaviour:
   requiredResource: 1
   cost: 50
   description: Heal yourself for {0}.
+  sound: {fileID: 8300000, guid: 2b1ee5880594cfe4bb0fabf5f0411a9f, type: 3}
   heal: 50
